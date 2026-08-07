@@ -1,0 +1,128 @@
+import React, { useState } from 'react';
+import { Helmet } from 'react-helmet-async';
+import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { orderService } from '../../services/order.service';
+import { STORE_NAME } from '../../constants';
+import Spinner from '../../components/ui/Spinner';
+
+const TABS = [
+  { label: 'All',              value: '' },
+  { label: 'Pending Payment',  value: 'pending_payment' },
+  { label: 'Confirmed',        value: 'confirmed' },
+  { label: 'Preparing',        value: 'preparing' },
+  { label: 'Out for Delivery', value: 'out_for_delivery' },
+  { label: 'Delivered',        value: 'delivered' },
+  { label: 'Cancelled',        value: 'cancelled' },
+];
+
+const STATUS_COLORS = {
+  pending_payment:  'bg-orange-100 text-orange-700',
+  payment_received: 'bg-blue-50   text-blue-600',
+  confirmed:        'bg-blue-100  text-blue-700',
+  preparing:        'bg-yellow-100 text-yellow-700',
+  packed:           'bg-purple-100 text-purple-700',
+  out_for_delivery: 'bg-indigo-100 text-indigo-700',
+  delivered:        'bg-green-100  text-green-700',
+  cancelled:        'bg-red-100   text-red-700',
+};
+
+const fmtDate = (d) => {
+  if (!d) return '—';
+  try { return new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); }
+  catch { return d; }
+};
+
+export default function OrdersAdminPage() {
+  const [activeTab, setActiveTab] = useState('');
+
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ['admin-orders', activeTab],
+    queryFn: () =>
+      orderService.getAllOrders({ status: activeTab || undefined })
+        .then(r => r.data?.data || r.data || []),
+    staleTime: 60 * 1000,
+  });
+
+  const orders = Array.isArray(data) ? data : (data?.data || []);
+
+  return (
+    <div className="p-6 max-w-7xl mx-auto animate-fadeIn">
+      <Helmet><title>Manage Orders - {STORE_NAME} Admin</title></Helmet>
+
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+        <p className="text-sm text-gray-500">View and manage customer orders</p>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        {/* Status Tabs */}
+        <div className="flex overflow-x-auto border-b border-gray-100 hide-scrollbar">
+          {TABS.map(tab => (
+            <button
+              key={tab.value}
+              onClick={() => setActiveTab(tab.value)}
+              className={`px-5 py-4 text-sm font-semibold whitespace-nowrap border-b-2 transition-colors ${
+                activeTab === tab.value
+                  ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          {isLoading ? (
+            <div className="flex justify-center py-16"><Spinner size="lg" /></div>
+          ) : isError ? (
+            <p className="text-center text-red-500 py-10">Failed to load orders.</p>
+          ) : (
+            <table className="w-full text-left">
+              <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-semibold border-b border-gray-100">
+                <tr>
+                  <th className="px-6 py-4">Invoice</th>
+                  <th className="px-6 py-4">Date</th>
+                  <th className="px-6 py-4">Customer</th>
+                  <th className="px-6 py-4">Total</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm">
+                {orders.length === 0 ? (
+                  <tr><td colSpan="6" className="text-center py-10 text-gray-400">No orders found.</td></tr>
+                ) : orders.map(order => {
+                  const orderId   = order.id || order._id;
+                  const invoiceId = order.invoice_id || order.invoiceId || orderId?.substring(0, 8).toUpperCase();
+                  const customer  = order.users?.name || order.customerName || '—';
+                  const total     = parseFloat(order.total ?? order.totalAmount ?? 0);
+                  return (
+                    <tr key={orderId} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-indigo-600">#{invoiceId}</td>
+                      <td className="px-6 py-4 text-gray-500">{fmtDate(order.created_at || order.createdAt)}</td>
+                      <td className="px-6 py-4 font-medium text-gray-900">{customer}</td>
+                      <td className="px-6 py-4 font-bold text-gray-900">₹{total.toFixed(0)}</td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                          {order.status?.replace(/_/g, ' ')}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Link to={`/admin/orders/${orderId}`} className="text-indigo-600 font-semibold hover:underline">
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
