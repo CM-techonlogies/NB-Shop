@@ -48,19 +48,19 @@ const offerRoutes = require('./routes/offer.routes');
 const settingRoutes = require('./routes/setting.routes');
 const adminRoutes = require('./routes/admin.routes');
 
-app.use('/api/auth', authRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/categories', categoryRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/banners', bannerRoutes);
-app.use('/api/offers', offerRoutes);
-app.use('/api/settings', settingRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes); app.use('/auth', authRoutes);
+app.use('/api/products', productRoutes); app.use('/products', productRoutes);
+app.use('/api/categories', categoryRoutes); app.use('/categories', categoryRoutes);
+app.use('/api/cart', cartRoutes); app.use('/cart', cartRoutes);
+app.use('/api/orders', orderRoutes); app.use('/orders', orderRoutes);
+app.use('/api/users', userRoutes); app.use('/users', userRoutes);
+app.use('/api/banners', bannerRoutes); app.use('/banners', bannerRoutes);
+app.use('/api/offers', offerRoutes); app.use('/offers', offerRoutes);
+app.use('/api/settings', settingRoutes); app.use('/settings', settingRoutes);
+app.use('/api/admin', adminRoutes); app.use('/admin', adminRoutes);
 
 // Health check
-app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+app.get(['/api/health', '/health'], (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` }));

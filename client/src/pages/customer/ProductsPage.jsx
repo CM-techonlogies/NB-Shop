@@ -40,8 +40,8 @@ export default function ProductsPage() {
   const [maxPrice, setMaxPrice] = useState(5000);
   const [selectedDiscounts, setSelectedDiscounts] = useState([]);
   const [discountOnly, setDiscountOnly] = useState(initialDiscountOnly); // filter: mrp > price
-  const [selectedRatings, setSelectedRatings] = useState(['4']);
-  const [selectedAvailability, setSelectedAvailability] = useState(['inStock', 'availableToday']);
+  const [selectedRatings, setSelectedRatings] = useState([]);
+  const [selectedAvailability, setSelectedAvailability] = useState([]);
   const [selectedDelivery, setSelectedDelivery] = useState([]);
   const [selectedPayment, setSelectedPayment] = useState([]);
   const [selectedSpecialOffers, setSelectedSpecialOffers] = useState([]);
