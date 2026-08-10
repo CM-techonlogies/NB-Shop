@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS order_items (
   name TEXT NOT NULL,
   image TEXT,
   price NUMERIC(10,2) NOT NULL,
-  qty INTEGER NOT NULL,
+  qty NUMERIC(10,3) NOT NULL,
   total NUMERIC(10,2) NOT NULL
 );
 

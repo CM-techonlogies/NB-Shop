@@ -85,9 +85,13 @@ exports.createOrder = asyncHandler(async (req, res) => {
   }]).select().single();
   if (oErr) throw new ApiError(500, oErr.message);
 
-  // Insert order items
-  await supabase.from('order_items')
+  // Insert order items — catch errors explicitly so we can debug
+  const { error: itemsErr } = await supabase.from('order_items')
     .insert(orderItems.map(oi => ({ ...oi, order_id: order.id })));
+  if (itemsErr) {
+    console.error('Failed to insert order items:', itemsErr.message, JSON.stringify(orderItems));
+    throw new ApiError(500, `Failed to save order items: ${itemsErr.message}`);
+  }
 
   // Insert initial status history
   await supabase.from('order_status_history')

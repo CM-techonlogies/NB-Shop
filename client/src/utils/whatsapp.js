@@ -41,8 +41,12 @@ export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
 
   const invoiceId  = order?.invoice_id || order?.invoiceId || order?.id || '—';
   const subtotal   = parseFloat(order?.subtotal   ?? 0);
-  const delivery   = parseFloat(order?.delivery_charge ?? order?.deliveryCharge ?? 0);
-  const total      = parseFloat(order?.total ?? order?.totalAmount ?? subtotal + delivery);
+  // Use delivery_charge from order; if 0 but subtotal < 499, recalculate
+  let delivery = parseFloat(order?.delivery_charge ?? order?.deliveryCharge ?? 0);
+  if (delivery === 0 && subtotal > 0 && subtotal < 499) {
+    delivery = 40; // fallback to default delivery charge
+  }
+  const total = parseFloat(order?.total ?? order?.totalAmount ?? subtotal + delivery);
 
   const name     = address.fullName || address.name || 'Customer';
   const phone    = (address.phone || '').replace(/\D/g, '');
