@@ -61,6 +61,8 @@ CREATE TABLE IF NOT EXISTS products (
   available BOOLEAN DEFAULT true,
   featured BOOLEAN DEFAULT false,
   trending BOOLEAN DEFAULT false,
+  is_loose BOOLEAN DEFAULT false,
+  min_quantity NUMERIC(10,3) DEFAULT NULL,
   tags TEXT[] DEFAULT '{}',
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

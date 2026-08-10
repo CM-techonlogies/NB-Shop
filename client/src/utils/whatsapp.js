@@ -56,11 +56,19 @@ export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
   const dateFormatted = formatOrderDate(order?.created_at || order?.createdAt);
 
   const itemLines = items.map((item) => {
-    const qty   = item.qty ?? item.quantity ?? 1;
+    const isLoose = item.customQty !== undefined;
+    const customQty = item.customQty;
+    const unit = item.unit || '';
+    const qty = isLoose ? customQty : (item.qty ?? item.quantity ?? 1);
     const pname = item.name || item.product?.name || 'Product';
     const price = parseFloat(item.price || 0);
     const itemTotal = price * qty;
-    return `• ${pname}\n  Qty : ${qty} × ₹${price.toFixed(0)} = ₹${itemTotal.toFixed(0)}`;
+
+    const qtyLabel = isLoose
+      ? `${qty} ${unit}`   // e.g. "1.5 kg"
+      : `${qty} pcs`;
+
+    return `• ${pname}\n  Qty : ${qtyLabel} × ₹${price.toFixed(0)} = ₹${itemTotal.toFixed(0)}`;
   }).join('\n\n');
 
   const locationSection = mapsUrl

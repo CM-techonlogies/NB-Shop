@@ -33,16 +33,31 @@ exports.createOrder = asyncHandler(async (req, res) => {
     const product = products.find(p => p.id === item.product);
     if (!product) throw new ApiError(400, `Product not found: ${item.product}`);
     if (!product.available) throw new ApiError(400, `${product.name} is not available`);
-    if (product.stock < item.quantity) throw new ApiError(400, `Insufficient stock for ${product.name}`);
 
-    const itemTotal = product.price * item.quantity;
+    const qty = parseFloat(item.quantity) || 1;
+    const isLoose = item.is_loose || false;
+    const unit = item.unit || '';
+
+    // For loose items, qty is weight (e.g. 1.5 kg) — only check stock if it's a whole-unit product
+    if (!isLoose && product.stock < qty) {
+      throw new ApiError(400, `Insufficient stock for ${product.name}`);
+    }
+
+    const itemPrice = parseFloat(item.price) || product.price;
+    const itemTotal = itemPrice * qty;
     subtotal += itemTotal;
+
+    // For loose items: show "1.5 kg" label in order history
+    const displayName = isLoose && unit
+      ? `${product.name} (${qty} ${unit})`
+      : product.name;
+
     orderItems.push({
       product_id: product.id,
-      name: product.name,
+      name: displayName,
       image: product.product_images?.[0]?.url || null,
-      price: product.price,
-      qty: item.quantity,
+      price: itemPrice,
+      qty: qty,
       total: itemTotal,
     });
   }

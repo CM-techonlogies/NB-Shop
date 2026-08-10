@@ -109,11 +109,18 @@ export default function CheckoutPage() {
 
       const orderData = {
         shippingAddress,
-        items: cart.map(item => ({
-          product: item.id,
-          quantity: item.qty,
-          price: item.price,
-        })),
+        items: cart.map(item => {
+          // For loose items: send customQty (e.g. 1.5 kg) as quantity
+          // For fixed items: send normal qty (e.g. 2 bags)
+          const effectiveQty = item.customQty !== undefined ? item.customQty : (item.qty || 1);
+          return {
+            product: item.id,
+            quantity: effectiveQty,
+            price: item.price,
+            is_loose: !!item.customQty,
+            unit: item.unit || '',
+          };
+        }),
         notes: formattedNotes,
       };
 
