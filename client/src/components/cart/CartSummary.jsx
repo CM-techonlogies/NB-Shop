@@ -3,17 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { useLanguageStore } from '../../store/languageStore';
 import { formatPrice } from '../../utils/formatPrice';
-import { FREE_DELIVERY_ABOVE, DELIVERY_CHARGE } from '../../constants';
 
 export default function CartSummary({ showCheckoutButton = true }) {
   const navigate = useNavigate();
-  const { subtotal: cartTotal, itemCount } = useCart();
+  const { subtotal: cartTotal, itemCount, deliveryCharge, freeDeliveryAbove, total } = useCart();
   const { t, language } = useLanguageStore();
   
-  const needsMoreForFree = cartTotal < FREE_DELIVERY_ABOVE;
-  const deliveryFee = needsMoreForFree ? DELIVERY_CHARGE : 0;
-  const totalAmount = cartTotal + deliveryFee;
-  const progressPercent = Math.min(100, (cartTotal / FREE_DELIVERY_ABOVE) * 100);
+  const needsMoreForFree = cartTotal > 0 && cartTotal < freeDeliveryAbove;
+  const progressPercent = Math.min(100, (cartTotal / freeDeliveryAbove) * 100);
 
   if (itemCount === 0) return null;
 
@@ -27,8 +24,8 @@ export default function CartSummary({ showCheckoutButton = true }) {
         <div className="mb-4 bg-orange-50 p-3 rounded-2xl border border-orange-100">
           <p className="text-xs text-orange-700 font-medium mb-2">
             {language === 'hi' 
-              ? `मुफ्त डिलीवरी के लिए ${formatPrice(FREE_DELIVERY_ABOVE - cartTotal)} का सामान और जोड़ें`
-              : `Add ${formatPrice(FREE_DELIVERY_ABOVE - cartTotal)} more for free delivery`
+              ? `मुफ्त डिलीवरी के लिए ${formatPrice(freeDeliveryAbove - cartTotal)} का सामान और जोड़ें`
+              : `Add ${formatPrice(freeDeliveryAbove - cartTotal)} more for free delivery`
             }
           </p>
           <div className="w-full bg-orange-200 rounded-full h-1.5 overflow-hidden">
@@ -44,8 +41,8 @@ export default function CartSummary({ showCheckoutButton = true }) {
         </div>
         <div className="flex justify-between">
           <span>{t('delivery_charge')}</span>
-          {needsMoreForFree ? (
-            <span className="font-medium text-gray-800">{formatPrice(deliveryFee)}</span>
+          {deliveryCharge > 0 ? (
+            <span className="font-medium text-gray-800">{formatPrice(deliveryCharge)}</span>
           ) : (
             <span className="font-bold text-emerald-600">{t('free')}</span>
           )}
@@ -54,7 +51,7 @@ export default function CartSummary({ showCheckoutButton = true }) {
 
       <div className="flex justify-between items-end mb-5">
         <span className="text-base font-bold text-gray-800 font-heading">{t('to_pay')}</span>
-        <span className="text-2xl font-black text-primary-600 font-heading">{formatPrice(totalAmount)}</span>
+        <span className="text-2xl font-black text-primary-600 font-heading">{formatPrice(total)}</span>
       </div>
 
       {showCheckoutButton && (

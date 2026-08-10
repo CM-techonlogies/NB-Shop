@@ -29,8 +29,14 @@ exports.updateSettings = asyncHandler(async (req, res) => {
   allowed.forEach(k => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
 
   // Always store delivery values as numbers so comparison works correctly
-  if (updates.delivery_charge !== undefined)   updates.delivery_charge   = parseFloat(updates.delivery_charge)   || 40;
-  if (updates.free_delivery_above !== undefined) updates.free_delivery_above = parseFloat(updates.free_delivery_above) || 499;
+  if (updates.delivery_charge !== undefined) {
+    const num = parseFloat(updates.delivery_charge);
+    updates.delivery_charge = isNaN(num) ? 40 : num;
+  }
+  if (updates.free_delivery_above !== undefined) {
+    const num = parseFloat(updates.free_delivery_above);
+    updates.free_delivery_above = isNaN(num) ? 499 : num;
+  }
 
   const { data, error } = await supabase.from('settings')
     .update(updates).eq('id', 1).select().single();

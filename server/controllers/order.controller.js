@@ -62,16 +62,19 @@ exports.createOrder = asyncHandler(async (req, res) => {
     });
   }
 
-  // Get delivery settings — parse as float to avoid string comparison bugs
+  // Get delivery settings — safely parse dynamic numbers configured in Admin Panel
   const { data: settings } = await supabase
     .from('settings').select('delivery_charge, free_delivery_above').eq('id', 1).single();
 
-  // Use explicit parseFloat + safe defaults (40 charge, 499 free threshold)
-  const freeDeliveryAbove = parseFloat(settings?.free_delivery_above) || 499;
-  const chargePerOrder    = parseFloat(settings?.delivery_charge)     || 40;
+  const parseSetting = (val, defaultVal) => {
+    if (val === null || val === undefined || val === '') return defaultVal;
+    const num = parseFloat(val);
+    return isNaN(num) ? defaultVal : num;
+  };
 
-  // If delivery_charge saved as 0 deliberately but admin likely didn't intend free forever
-  // Only give free delivery when subtotal truly crosses the threshold
+  const freeDeliveryAbove = parseSetting(settings?.free_delivery_above, 499);
+  const chargePerOrder    = parseSetting(settings?.delivery_charge, 40);
+
   const deliveryCharge = subtotal >= freeDeliveryAbove ? 0 : chargePerOrder;
   const total = subtotal + deliveryCharge;
 

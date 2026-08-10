@@ -1,8 +1,18 @@
 import useCartStore from '../store/cartStore';
-import { DELIVERY_CHARGE, FREE_DELIVERY_ABOVE } from '../constants';
+import { useSettings } from './useSettings';
 
 export const useCart = () => {
   const store = useCartStore();
+  const { data: settings } = useSettings();
+
+  // Safely parse dynamic settings configured by admin
+  const freeDeliveryAbove = settings?.free_delivery_above !== undefined && settings?.free_delivery_above !== null
+    ? parseFloat(settings.free_delivery_above)
+    : 499;
+
+  const chargePerOrder = settings?.delivery_charge !== undefined && settings?.delivery_charge !== null
+    ? parseFloat(settings.delivery_charge)
+    : 40;
 
   const items = Array.isArray(store.items) ? store.items : [];
   const itemCount = items.reduce((total, item) => total + (item.qty || 0), 0);
@@ -11,9 +21,10 @@ export const useCart = () => {
     const effectiveQty = item.customQty !== undefined ? item.customQty : (item.qty || 0);
     return total + ((item.price || 0) * effectiveQty);
   }, 0);
-  const deliveryCharge = subtotal > FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
+
+  const isFreeDelivery = subtotal > 0 && subtotal >= freeDeliveryAbove;
+  const deliveryCharge = (subtotal > 0 && !isFreeDelivery) ? chargePerOrder : 0;
   const total = subtotal + deliveryCharge;
-  const isFreeDelivery = subtotal > FREE_DELIVERY_ABOVE;
 
   const matchTarget = (item, targetId) => {
     if (!item || targetId === undefined || targetId === null) return false;
@@ -54,6 +65,8 @@ export const useCart = () => {
     subtotal,
     cartTotal: subtotal,
     deliveryCharge,
+    freeDeliveryAbove,
+    chargePerOrder,
     total,
     isFreeDelivery,
     isInCart,
