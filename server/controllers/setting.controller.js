@@ -28,6 +28,10 @@ exports.updateSettings = asyncHandler(async (req, res) => {
   const updates = {};
   allowed.forEach(k => { if (req.body[k] !== undefined) updates[k] = req.body[k]; });
 
+  // Always store delivery values as numbers so comparison works correctly
+  if (updates.delivery_charge !== undefined)   updates.delivery_charge   = parseFloat(updates.delivery_charge)   || 40;
+  if (updates.free_delivery_above !== undefined) updates.free_delivery_above = parseFloat(updates.free_delivery_above) || 499;
+
   const { data, error } = await supabase.from('settings')
     .update(updates).eq('id', 1).select().single();
   if (error) throw new ApiError(400, error.message);
