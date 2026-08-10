@@ -118,9 +118,9 @@ export default function AddProductPage() {
           </div>
         </div>
 
-        {/* Weight & Unit (Optional) */}
+        {/* Weight, Unit & Loose Item Config */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h2 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Weight & Unit (Optional)</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Weight, Unit & Item Type</h2>
           <div className="grid grid-cols-2 gap-5">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Weight/Volume (Optional)</label>
@@ -143,7 +143,35 @@ export default function AddProductPage() {
               </select>
             </div>
           </div>
+
+          {/* Loose Item Toggle */}
+          <div className="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div className="relative">
+                <input type="checkbox" {...register('is_loose')} className="sr-only peer" />
+                <div className="w-11 h-6 bg-gray-200 peer-checked:bg-amber-500 rounded-full transition-colors peer-focus:ring-2 peer-focus:ring-amber-300" />
+                <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-800 text-sm">⚖️ Loose Item (तौल से बिकने वाला)</p>
+                <p className="text-xs text-gray-500 mt-0.5">Customer will choose quantity (e.g. 250g, 1.5 kg) before adding to cart</p>
+              </div>
+            </label>
+
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Minimum Order Quantity <span className="text-gray-400 font-normal">(Optional)</span>
+              </label>
+              <div className="flex items-center gap-2">
+                <input type="number" step="0.01" min="0" {...register('min_quantity')}
+                  className="w-40 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 outline-none text-sm"
+                  placeholder="e.g. 0.25" />
+                <span className="text-sm text-gray-500">same unit as selected above (e.g. 0.25 kg = 250g min)</span>
+              </div>
+            </div>
+          </div>
         </div>
+
 
         {/* Product Images — paste URL from Google or any source */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">

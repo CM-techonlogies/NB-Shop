@@ -65,15 +65,27 @@ const useCartStore = create((set, get) => ({
 
     let updated;
     if (existing) {
-      updated = currentItems.map(i =>
-        matchId(i, key) ? { ...i, qty: (i.qty || 1) + 1 } : i
-      );
+      if (product.customQty !== undefined) {
+        // Loose item: replace customQty (re-selected from dialog)
+        updated = currentItems.map(i =>
+          matchId(i, key) ? { ...i, customQty: product.customQty } : i
+        );
+      } else {
+        updated = currentItems.map(i =>
+          matchId(i, key) ? { ...i, qty: (i.qty || 1) + 1 } : i
+        );
+      }
     } else {
       updated = [...currentItems, { ...product, id: key, qty: 1 }];
     }
     saveUserCart(state.currentUserId, updated);
     return { items: updated };
   }),
+
+  getItem: (id) => {
+    const { items } = useCartStore.getState();
+    return (Array.isArray(items) ? items : []).find(i => matchId(i, id)) || null;
+  },
 
   removeItem: (id) => set((state) => {
     const currentItems = Array.isArray(state.items) ? state.items : [];

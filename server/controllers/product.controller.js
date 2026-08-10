@@ -83,7 +83,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
   const {
     name, description, category_id, brand,
     mrp, price, stock, weight, unit, sku, barcode,
-    featured, trending, tags, images,
+    featured, trending, tags, images, is_loose, min_quantity,
   } = req.body;
 
   if (!name || !mrp || !price) throw new ApiError(400, 'name, mrp and price are required');
@@ -97,6 +97,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
     stock: parseInt(stock) || 0, weight, unit, sku, barcode,
     featured: featured === true || featured === 'true',
     trending: trending === true || trending === 'true',
+    is_loose: is_loose === true || is_loose === 'true',
+    min_quantity: min_quantity ? parseFloat(min_quantity) : null,
     tags: tags ? (Array.isArray(tags) ? tags : String(tags).split(',').map(t => t.trim())) : [],
     available: true,
   }]).select().single();
@@ -122,8 +124,13 @@ exports.updateProduct = asyncHandler(async (req, res) => {
 
   const updates = {};
   const allowed = ['name', 'description', 'category_id', 'brand', 'mrp', 'price',
-    'stock', 'weight', 'unit', 'sku', 'barcode', 'available', 'featured', 'trending', 'tags'];
+    'stock', 'weight', 'unit', 'sku', 'barcode', 'available', 'featured', 'trending',
+    'tags', 'is_loose', 'min_quantity'];
   allowed.forEach(k => { if (rest[k] !== undefined) updates[k] = rest[k]; });
+
+  // Coerce boolean / numeric fields
+  if (updates.is_loose !== undefined) updates.is_loose = updates.is_loose === true || updates.is_loose === 'true';
+  if (updates.min_quantity !== undefined) updates.min_quantity = updates.min_quantity ? parseFloat(updates.min_quantity) : null;
 
   if (updates.mrp && updates.price) {
     updates.discount = Math.round(((updates.mrp - updates.price) / updates.mrp) * 100);

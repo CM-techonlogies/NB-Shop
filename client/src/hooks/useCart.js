@@ -6,7 +6,11 @@ export const useCart = () => {
 
   const items = Array.isArray(store.items) ? store.items : [];
   const itemCount = items.reduce((total, item) => total + (item.qty || 0), 0);
-  const subtotal = items.reduce((total, item) => total + ((item.price || 0) * (item.qty || 0)), 0);
+  const subtotal = items.reduce((total, item) => {
+    // Loose items: price * customQty (e.g. 2.5 kg * ₹50/kg)
+    const effectiveQty = item.customQty !== undefined ? item.customQty : (item.qty || 0);
+    return total + ((item.price || 0) * effectiveQty);
+  }, 0);
   const deliveryCharge = subtotal > FREE_DELIVERY_ABOVE ? 0 : DELIVERY_CHARGE;
   const total = subtotal + deliveryCharge;
   const isFreeDelivery = subtotal > FREE_DELIVERY_ABOVE;
@@ -26,6 +30,10 @@ export const useCart = () => {
     return item ? item.qty : 0;
   };
 
+  const getItem = (productId) => {
+    return items.find(i => matchTarget(i, productId)) || null;
+  };
+
   const addToCart = (product) => {
     const id = resolveId(product);
     store.addItem({ ...product, id });
@@ -41,15 +49,16 @@ export const useCart = () => {
 
   return {
     items,
-    cart: items,          // alias for backward compat
+    cart: items,
     itemCount,
     subtotal,
-    cartTotal: subtotal,  // alias for backward compat
+    cartTotal: subtotal,
     deliveryCharge,
     total,
     isFreeDelivery,
     isInCart,
     getQty,
+    getItem,
     addToCart,
     removeFromCart,
     updateQuantity,
