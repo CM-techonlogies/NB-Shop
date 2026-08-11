@@ -337,6 +337,9 @@ export default function ProductCard({ product }) {
             {product.name}
           </h3>
 
+          {/* Thin separator line */}
+          <div className="w-full h-px bg-gray-200 mb-2" />
+
           {/* Rating Row */}
           <div className="flex items-center gap-1.5 mb-2">
             <span className="inline-flex items-center gap-1 bg-emerald-700 text-white text-xs font-bold px-1.5 py-0.5 rounded">
