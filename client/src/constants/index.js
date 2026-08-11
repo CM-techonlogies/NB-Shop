@@ -59,5 +59,5 @@ export const SAMPLE_CATEGORIES = [
   { _id: '10', name: 'Dairy', slug: 'dairy', image: { url: '' } },
 ];
 
-export const STORE_NAME = import.meta.env.VITE_STORE_NAME || 'MyKirana Store';
+export const STORE_NAME = import.meta.env.VITE_STORE_NAME || 'NB Shop';
 export const OWNER_WHATSAPP = import.meta.env.VITE_OWNER_WHATSAPP || '919876543210';

@@ -7,11 +7,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
+      includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.jpg'],
       manifest: {
-        name: 'MyKirana Store',
-        short_name: 'MyKirana',
-        description: 'Fresh Groceries Delivered',
+        name: 'NB Shop',
+        short_name: 'NB Shop',
+        description: 'NB Shop - Fresh Groceries Delivered',
         theme_color: '#FF6B00',
         background_color: '#FFF8F0',
         display: 'standalone',
