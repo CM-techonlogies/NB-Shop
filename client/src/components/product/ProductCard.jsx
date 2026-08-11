@@ -209,7 +209,6 @@ function LooseQtyDialog({ product, onConfirm, onClose }) {
 export default function ProductCard({ product }) {
   const { addToCart, updateQuantity, removeFromCart, getQty } = useCart();
   const { t } = useLanguageStore();
-  const [isWishlisted, setIsWishlisted] = useState(false);
   const [showLooseDialog, setShowLooseDialog] = useState(false);
 
   const productId = product.id || product._id;
@@ -267,12 +266,6 @@ export default function ProductCard({ product }) {
     }
   };
 
-  const toggleWishlist = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsWishlisted(!isWishlisted);
-  };
-
   // Find the cart item to get customQty for loose items
   const cartItem = useCart().getItem ? useCart().getItem(productId) : null;
 
@@ -290,7 +283,7 @@ export default function ProductCard({ product }) {
         to={`/product/${productId}`}
         className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden p-3 md:p-4"
       >
-        {/* Top Bar: Badge (left) & Wishlist (right) */}
+        {/* Top Bar: LOOSE badge (left) & % OFF or label badge (right) */}
         <div className="flex items-center justify-between z-10 mb-2">
           <div className="flex items-center gap-1">
             {isLoose && (
@@ -298,6 +291,8 @@ export default function ProductCard({ product }) {
                 ⚖️ LOOSE
               </span>
             )}
+          </div>
+          <div>
             {discount > 0 ? (
               <span className="bg-emerald-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
                 {discount}% OFF
@@ -312,21 +307,6 @@ export default function ProductCard({ product }) {
               </span>
             ) : null}
           </div>
-
-          <button
-            onClick={toggleWishlist}
-            className="p-1.5 rounded-full bg-white/80 hover:bg-gray-100 text-gray-400 hover:text-red-500 transition-colors shadow-xs"
-            title="Add to Wishlist"
-          >
-            <svg
-              className={`w-5 h-5 transition-transform active:scale-125 ${
-                isWishlisted ? 'fill-red-500 text-red-500' : 'fill-none stroke-current stroke-2'
-              }`}
-              viewBox="0 0 24 24"
-            >
-              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
-            </svg>
-          </button>
         </div>
 
         {/* Product Image */}
@@ -373,9 +353,6 @@ export default function ProductCard({ product }) {
             )}
             {product.mrp > product.price && (
               <span className="text-xs text-gray-400 line-through font-medium">{formatPrice(product.mrp)}</span>
-            )}
-            {discount > 0 && (
-              <span className="text-xs font-bold text-emerald-600">{discount}% OFF</span>
             )}
           </div>
 
