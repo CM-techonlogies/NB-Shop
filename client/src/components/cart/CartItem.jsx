@@ -9,8 +9,8 @@ export default function CartItem({ item }) {
   const isLoose = item.customQty !== undefined;
   const qty = item.qty || 1;
   const customQty = item.customQty;
-  const customDisplay = item.customDisplay || `${customQty} ${unit}`;  // e.g. "500 g" or "1.5 kg"
   const unit = item.unit || '';
+  const customDisplay = item.customDisplay || `${customQty} ${unit}`;  // e.g. "500 gm" or "1.5 kg"
 
   // Effective quantity for price calculation (always in base unit)
   const effectiveQty = isLoose ? customQty : qty;
