@@ -362,7 +362,7 @@ export default function ProductCard({ product }) {
           </div>
 
           {/* Action Button / Quantity Counter */}
-          <div className="mt-auto pt-2 border-t border-gray-100 flex items-center">
+          <div className="mt-auto pt-2 flex items-center">
             {qty > 0 ? (
               <div
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
