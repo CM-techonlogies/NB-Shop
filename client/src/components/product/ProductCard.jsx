@@ -4,25 +4,68 @@ import { useCart } from '../../hooks/useCart';
 import { useLanguageStore } from '../../store/languageStore';
 import { formatPrice, formatDiscount } from '../../utils/formatPrice';
 
+// ─── Unit helpers ─────────────────────────────────────────────────────────────
+const SUB_UNITS = {
+  kg: ['kg', 'g'],
+  l:  ['l', 'ml'],
+  g:  ['g'],
+  ml: ['ml'],
+  pcs: ['pcs'],
+  pack: ['pack'],
+  dozen: ['dozen'],
+};
+
+// Factor to convert selected display unit → base unit
+// e.g. if product is in kg and user selects "g", factor = 0.001
+const toBaseUnit = (displayUnit, baseUnit) => {
+  if (displayUnit === baseUnit) return 1;
+  if (displayUnit === 'g'  && baseUnit === 'kg') return 0.001;
+  if (displayUnit === 'ml' && baseUnit === 'l')  return 0.001;
+  return 1;
+};
+
+const PRESETS_BY_UNIT = {
+  kg:    [0.25, 0.5, 1, 2, 5],
+  g:     [100, 250, 500, 1000],
+  l:     [0.25, 0.5, 1, 2],
+  ml:    [100, 250, 500, 1000],
+  pcs:   [1, 2, 3, 5],
+  pack:  [1, 2, 3],
+  dozen: [1, 2],
+};
+
+const STEP_BY_UNIT = { kg: 0.25, g: 50, l: 0.25, ml: 100, pcs: 1, pack: 1, dozen: 1 };
+
 // ─── Loose Item Quantity Dialog ───────────────────────────────────────────────
 function LooseQtyDialog({ product, onConfirm, onClose }) {
-  const unit = product.unit || 'kg';
-  const minQty = parseFloat(product.min_quantity) || 0;
+  const baseUnit = product.unit || 'kg';
+  const minQtyBase = parseFloat(product.min_quantity) || 0; // in base unit
+  const subUnitOptions = SUB_UNITS[baseUnit] || [baseUnit];
 
-  const stepMap = { kg: 0.25, g: 50, l: 0.25, ml: 100, pcs: 1, pack: 1, dozen: 1 };
-  const step = stepMap[unit] || 0.25;
+  const [selectedUnit, setSelectedUnit] = useState(baseUnit);
+  const factor = toBaseUnit(selectedUnit, baseUnit);           // e.g. 0.001 for g→kg
+  const presets = PRESETS_BY_UNIT[selectedUnit] || [1, 2, 5];
+  const step = STEP_BY_UNIT[selectedUnit] || 1;
 
-  const [qty, setQty] = useState(minQty > 0 ? minQty : step);
-  const [inputVal, setInputVal] = useState(minQty > 0 ? String(minQty) : String(step));
+  // minQty expressed in selectedUnit for validation display
+  const minInDisplay = minQtyBase > 0 ? (minQtyBase / factor) : 0;
+
+  const initVal = minInDisplay > 0 ? minInDisplay : (presets[0] || step);
+  const [inputVal, setInputVal] = useState(String(initVal));
+  const [qty, setQty] = useState(initVal);       // quantity in DISPLAY unit
   const [error, setError] = useState('');
 
-  const presets = unit === 'g'
-    ? [100, 250, 500, 1000]
-    : unit === 'ml'
-    ? [250, 500, 1000]
-    : unit === 'kg' || unit === 'l'
-    ? [0.25, 0.5, 1, 2, 5]
-    : [1, 2, 3, 5];
+  const handleUnitSwitch = (newUnit) => {
+    setSelectedUnit(newUnit);
+    // keep same BASE quantity, convert display
+    const newFactor = toBaseUnit(newUnit, baseUnit);
+    const baseQty = qty * factor;                // current value in base unit
+    const newDisplay = baseQty / newFactor;      // convert to new display unit
+    const rounded = parseFloat(newDisplay.toFixed(2));
+    setQty(rounded);
+    setInputVal(String(rounded));
+    setError('');
+  };
 
   const handlePreset = (val) => {
     setQty(val);
@@ -33,17 +76,22 @@ function LooseQtyDialog({ product, onConfirm, onClose }) {
   const handleInput = (val) => {
     setInputVal(val);
     const num = parseFloat(val);
-    if (!isNaN(num) && num > 0) {
-      setQty(num);
-      setError('');
-    }
+    if (!isNaN(num) && num > 0) { setQty(num); setError(''); }
   };
+
+  // qty is in display unit; convert to base unit for price calc & storage
+  const qtyInBase = qty * factor;
+  const totalPrice = parseFloat(product.price) * qtyInBase;
 
   const handleConfirm = () => {
     const num = parseFloat(inputVal);
     if (!num || num <= 0) { setError('Please enter a valid quantity'); return; }
-    if (minQty > 0 && num < minQty) { setError(`Minimum order is ${minQty} ${unit}`); return; }
-    onConfirm(num);
+    if (minInDisplay > 0 && num < minInDisplay) {
+      setError(`Minimum order is ${minInDisplay} ${selectedUnit}`);
+      return;
+    }
+    // Pass back base-unit qty + display string
+    onConfirm(parseFloat((num * factor).toFixed(3)), `${num} ${selectedUnit}`);
   };
 
   return (
@@ -56,21 +104,42 @@ function LooseQtyDialog({ product, onConfirm, onClose }) {
         className="relative bg-white w-full sm:max-w-sm rounded-t-3xl sm:rounded-2xl shadow-2xl p-6 z-10"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Handle bar */}
+        {/* Handle bar (mobile) */}
         <div className="w-10 h-1 bg-gray-200 rounded-full mx-auto mb-5 sm:hidden" />
 
+        {/* Header */}
         <div className="flex items-center gap-3 mb-5">
-          <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">
-            ⚖️
-          </div>
+          <div className="w-12 h-12 rounded-xl bg-orange-50 flex items-center justify-center text-2xl">⚖️</div>
           <div>
             <h3 className="font-bold text-gray-900 text-base leading-tight">{product.name}</h3>
             <p className="text-xs text-gray-500 mt-0.5">
-              {formatPrice(product.price)} per {unit}
-              {minQty > 0 && <span className="ml-1.5 text-orange-500">• Min: {minQty} {unit}</span>}
+              {formatPrice(product.price)} per {baseUnit}
+              {minQtyBase > 0 && <span className="ml-1.5 text-orange-500">• Min: {minQtyBase} {baseUnit}</span>}
             </p>
           </div>
         </div>
+
+        {/* Unit Switcher — only show if there are multiple sub-units */}
+        {subUnitOptions.length > 1 && (
+          <div className="mb-4">
+            <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Unit</p>
+            <div className="flex gap-2">
+              {subUnitOptions.map(u => (
+                <button
+                  key={u}
+                  onClick={() => handleUnitSwitch(u)}
+                  className={`flex-1 py-2 rounded-xl text-sm font-bold border-2 transition-all ${
+                    selectedUnit === u
+                      ? 'bg-orange-500 text-white border-orange-500'
+                      : 'bg-white text-gray-600 border-gray-200 hover:border-orange-300'
+                  }`}
+                >
+                  {u.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Quick Presets */}
         <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Quick Select</p>
@@ -85,46 +154,49 @@ function LooseQtyDialog({ product, onConfirm, onClose }) {
                   : 'bg-gray-50 text-gray-700 border-gray-200 hover:border-orange-300'
               }`}
             >
-              {p} {unit}
+              {p} {selectedUnit}
             </button>
           ))}
         </div>
 
-        {/* Custom Input */}
+        {/* Custom Input with unit dropdown */}
         <p className="text-xs font-semibold text-gray-500 mb-2 uppercase tracking-wide">Or Enter Custom</p>
         <div className="flex items-center gap-2 mb-1">
           <input
             type="number"
-            min={minQty > 0 ? minQty : step}
+            min={minInDisplay > 0 ? minInDisplay : step}
             step={step}
             value={inputVal}
             onChange={(e) => handleInput(e.target.value)}
             className="flex-1 p-3 border-2 border-gray-200 focus:border-orange-400 rounded-xl outline-none text-lg font-bold text-gray-900 transition-colors"
-            placeholder={`Enter ${unit}...`}
+            placeholder={`Enter quantity...`}
           />
-          <span className="text-gray-500 font-bold text-sm bg-gray-100 px-3 py-3 rounded-xl">{unit}</span>
+          {/* Dropdown unit selector */}
+          <select
+            value={selectedUnit}
+            onChange={(e) => handleUnitSwitch(e.target.value)}
+            className="bg-gray-100 text-gray-700 font-bold text-sm px-3 py-3 rounded-xl border-0 outline-none focus:ring-2 focus:ring-orange-300 cursor-pointer"
+          >
+            {subUnitOptions.map(u => (
+              <option key={u} value={u}>{u}</option>
+            ))}
+          </select>
         </div>
         {error && <p className="text-red-500 text-xs mt-1 mb-2">{error}</p>}
 
         {/* Price Preview */}
-        {qty > 0 && (
+        {qtyInBase > 0 && (
           <div className="bg-orange-50 border border-orange-100 rounded-xl px-4 py-2.5 mb-4 flex items-center justify-between">
-            <span className="text-sm text-gray-600">Total for {qty} {unit}</span>
-            <span className="font-black text-orange-600 text-base">{formatPrice(parseFloat(product.price) * qty)}</span>
+            <span className="text-sm text-gray-600">Total for {qty} {selectedUnit}</span>
+            <span className="font-black text-orange-600 text-base">{formatPrice(totalPrice)}</span>
           </div>
         )}
 
         <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors"
-          >
+          <button onClick={onClose} className="flex-1 py-3 border-2 border-gray-200 rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors">
             Cancel
           </button>
-          <button
-            onClick={handleConfirm}
-            className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-bold transition-colors shadow-md shadow-orange-200"
-          >
+          <button onClick={handleConfirm} className="flex-1 py-3 bg-orange-500 hover:bg-orange-600 text-white rounded-xl text-sm font-bold transition-colors shadow-md shadow-orange-200">
             Add to Cart
           </button>
         </div>
@@ -167,10 +239,11 @@ export default function ProductCard({ product }) {
     }
   };
 
-  const handleLooseConfirm = (qty) => {
+  const handleLooseConfirm = (qtyInBase, displayStr) => {
     setShowLooseDialog(false);
-    // Add with custom loose quantity stored in customQty field
-    addToCart({ ...product, customQty: qty, qty: 1 });
+    // customQty = base unit (kg/l) for price calc
+    // customDisplay = user-visible string like "500 g" or "1.5 kg"
+    addToCart({ ...product, customQty: qtyInBase, customDisplay: displayStr || `${qtyInBase} ${product.unit || 'kg'}`, qty: 1 });
   };
 
   const handleInc = (e) => {
@@ -328,7 +401,7 @@ export default function ProductCard({ product }) {
                 </button>
                 <span className="font-extrabold text-primary-900 font-heading text-center leading-tight">
                   {isLoose && cartItem?.customQty
-                    ? `${cartItem.customQty} ${product.unit || 'kg'}`
+                    ? (cartItem.customDisplay || `${cartItem.customQty} ${product.unit || 'kg'}`)
                     : `${qty} ${t('in_cart')}`}
                 </span>
                 <button

@@ -171,11 +171,13 @@ export default function OrderDetailPage() {
               <h3 className="font-bold font-heading text-lg">Items Ordered ({items.length})</h3>
             </div>
             <div className="divide-y divide-gray-100">
-              {items.map((item, index) => {
+            {items.map((item, index) => {
                 const qty = item.qty ?? item.quantity ?? 1;
                 const name = item.name || item.product?.name || 'Item';
                 const price = parseFloat(item.price || 0);
                 const imageUrl = item.image || item.product?.product_images?.[0]?.url || null;
+                // Detect loose item: fractional qty OR name contains "(X kg/g/l/ml)"
+                const isLoose = !Number.isInteger(qty) || /\(\d+(\.\d+)?\s*(kg|g|l|ml)\)/i.test(name);
 
                 return (
                   <div key={index} className="p-4 sm:p-6 flex items-center gap-4">
@@ -187,9 +189,16 @@ export default function OrderDetailPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-800 truncate">{name}</h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-gray-800 truncate">{name}</h4>
+                        {isLoose && (
+                          <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 whitespace-nowrap flex-shrink-0">
+                            ⚖️ Loose
+                          </span>
+                        )}
+                      </div>
                       <p className="text-sm text-gray-500 mt-1">
-                        {formatDate ? `₹${price.toFixed(0)} × ${qty}` : ''}
+                        ₹{price.toFixed(0)} × {qty}
                       </p>
                     </div>
                     <div className="font-bold text-gray-900 text-right">

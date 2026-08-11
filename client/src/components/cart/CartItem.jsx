@@ -9,9 +9,10 @@ export default function CartItem({ item }) {
   const isLoose = item.customQty !== undefined;
   const qty = item.qty || 1;
   const customQty = item.customQty;
+  const customDisplay = item.customDisplay || `${customQty} ${unit}`;  // e.g. "500 g" or "1.5 kg"
   const unit = item.unit || '';
 
-  // Effective quantity for price calculation
+  // Effective quantity for price calculation (always in base unit)
   const effectiveQty = isLoose ? customQty : qty;
   const lineTotal = parseFloat(item.price) * effectiveQty;
 
@@ -51,7 +52,7 @@ export default function CartItem({ item }) {
           // Loose item: show weight badge + remove button only
           <div className="flex items-center gap-2">
             <span className="bg-amber-50 border border-amber-200 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full">
-              {customQty} {unit}
+              {customDisplay}
             </span>
             <button
               onClick={() => removeFromCart(productId)}

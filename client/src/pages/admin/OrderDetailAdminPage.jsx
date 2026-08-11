@@ -199,6 +199,8 @@ export default function OrderDetailAdminPage() {
                 const itemName = item.name || item.product?.name || 'Product';
                 const qty      = item.qty ?? item.quantity ?? 1;
                 const price    = parseFloat(item.price || 0);
+                // Detect loose item: fractional qty OR name contains "(X kg/g/l/ml)"
+                const isLoose  = !Number.isInteger(qty) || /\(\d+(\.\d+)?\s*(kg|g|l|ml)\)/i.test(itemName);
 
                 return (
                   <div key={item.id || item._id || idx} className="p-4 flex items-center gap-4">
@@ -210,7 +212,14 @@ export default function OrderDetailAdminPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-semibold text-gray-900 text-sm truncate">{itemName}</h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-gray-900 text-sm truncate">{itemName}</h4>
+                        {isLoose && (
+                          <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 whitespace-nowrap flex-shrink-0">
+                            ⚖️ Loose
+                          </span>
+                        )}
+                      </div>
                       <p className="text-xs text-gray-500 mt-0.5">
                         Qty: {qty} × ₹{price.toFixed(0)}
                       </p>
