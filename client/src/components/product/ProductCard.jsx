@@ -286,26 +286,26 @@ export default function ProductCard({ product }) {
         className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden p-3 md:p-4"
       >
         {/* Top Bar: LOOSE badge (left) & % OFF or label badge (right) */}
-        <div className="flex items-center justify-between z-10 mb-2">
-          <div className="flex items-center gap-1">
+        <div className="flex items-start justify-between gap-1 z-10 mb-2 min-w-0">
+          <div className="flex-shrink-0">
             {isLoose && (
-              <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-md border border-amber-200">
+              <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-200 whitespace-nowrap">
                 ⚖️ LOOSE
               </span>
             )}
           </div>
-          <div>
+          <div className="flex-shrink-0">
             {discount > 0 ? (
-              <span className="bg-emerald-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
+              <span className="inline-block bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide whitespace-nowrap">
                 {discount}% OFF
               </span>
             ) : product.trending ? (
-              <span className="bg-orange-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
-                TRENDING
+              <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide whitespace-nowrap">
+                HOT
               </span>
             ) : product.featured ? (
-              <span className="bg-purple-600 text-white text-[11px] font-bold px-2 py-0.5 rounded-md uppercase tracking-wide">
-                BEST SELLER
+              <span className="inline-block bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide whitespace-nowrap">
+                TOP
               </span>
             ) : null}
           </div>
