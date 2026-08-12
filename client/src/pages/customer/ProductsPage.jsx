@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import ProductGrid from '../../components/product/ProductGrid';
@@ -50,6 +50,17 @@ export default function ProductsPage() {
   const [page, setPage] = useState(1);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+
+  // ── Sync state when URL params change (e.g. navigating from Navbar search) ──
+  useEffect(() => {
+    const urlSearch = searchParams.get('search') || '';
+    const urlCategory = searchParams.get('category') || '';
+    const urlSort = searchParams.get('sort') || '-createdAt';
+    setSearch(urlSearch);
+    setCategory(urlCategory);
+    setSort(urlSort);
+    setPage(1);
+  }, [searchParams]);
 
   // Fetch categories
   const { data: categoriesRaw } = useCategories();
