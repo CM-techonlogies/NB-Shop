@@ -71,8 +71,10 @@ export default function HomePage() {
   return (
     <div className="animate-fadeIn">
       <Helmet>
-        <title>{STORE_NAME} - Fresh Groceries Delivered</title>
-        <meta name="description" content="Shop fresh groceries from your local Kirana store. Best prices on rice, atta, oil, spices and more." />
+        <title>NB Shop - Your Nearby Grocery Store</title>
+        <meta name="description" content='M/s NAVARAM BHUBAJI - "सभी प्रकार की किराना & प्रोविजनल आइटम्स उपलब्ध..."' />
+        <meta property="og:title" content="NB Shop - Your Nearby Grocery Store" />
+        <meta property="og:description" content='M/s NAVARAM BHUBAJI - "सभी प्रकार की किराना & प्रोविजनल आइटम्स उपलब्ध..."' />
       </Helmet>
 
       {/* ── Hero Swiper ─────────────────────────────────────── */}
