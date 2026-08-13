@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLanguageStore } from '../../store/languageStore';
 
 // Detect iOS/Safari (they don't support beforeinstallprompt)
 const isIos = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
@@ -7,6 +8,7 @@ const isInStandaloneMode = () =>
   window.navigator.standalone === true;
 
 export default function PwaInstallPrompt() {
+  const { t } = useLanguageStore();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showBanner, setShowBanner] = useState(false);
   const [showIosModal, setShowIosModal] = useState(false);
@@ -94,9 +96,9 @@ export default function PwaInstallPrompt() {
         <div className="flex items-center gap-2.5 min-w-0">
           <span className="text-xl flex-shrink-0">📲</span>
           <div className="truncate">
-            <p className="font-bold truncate">Install NB Shop App</p>
+            <p className="font-bold truncate">{t('install_app_title')}</p>
             <p className="text-[11px] text-white/80 font-normal truncate">
-              Add to your Home Screen for fast 1-tap grocery access
+              {t('install_app_desc')}
             </p>
           </div>
         </div>
@@ -106,7 +108,7 @@ export default function PwaInstallPrompt() {
             onClick={handleInstallClick}
             className="bg-white text-primary-600 font-bold px-3 py-1.5 rounded-lg shadow-xs hover:bg-gray-100 transition-all active:scale-95 text-xs whitespace-nowrap"
           >
-            {isIos() ? '📖 How to Install' : 'Add to Home Screen'}
+            {isIos() ? t('how_to_install') : t('add_to_home_screen')}
           </button>
           <button
             onClick={handleDismiss}

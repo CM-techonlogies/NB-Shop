@@ -313,12 +313,12 @@ export default function HomePage() {
         viewport={{ once: true }}
         className="text-center py-10 mb-6"
       >
-        <p className="text-gray-500 text-sm mb-4">Can't find what you're looking for?</p>
+        <p className="text-gray-500 text-sm mb-4">{t('cant_find')}</p>
         <Link
           to="/products"
           className="inline-block bg-primary-500 hover:bg-primary-600 text-white font-bold px-10 py-4 rounded-2xl shadow-lg hover:shadow-xl transition-all active:scale-95 text-base"
         >
-          Browse All Products →
+          {t('browse_all_products')}
         </Link>
       </motion.div>
     </div>

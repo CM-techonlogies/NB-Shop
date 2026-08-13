@@ -290,7 +290,7 @@ export default function ProductCard({ product }) {
           <div className="flex-shrink-0">
             {isLoose && (
               <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-200 whitespace-nowrap">
-                ⚖️ LOOSE
+                ⚖️ {t('loose')}
               </span>
             )}
           </div>
@@ -326,7 +326,7 @@ export default function ProductCard({ product }) {
           {isOutOfStock && (
             <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] flex items-center justify-center z-10">
               <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">
-                Out of Stock
+                {t('out_of_stock')}
               </span>
             </div>
           )}
@@ -363,7 +363,7 @@ export default function ProductCard({ product }) {
 
           {/* Delivery Tag */}
           <div className="text-xs text-gray-500 flex items-center gap-1 mb-4 font-medium">
-            <span>{product.price >= 499 ? '🚚 Free Delivery' : '⚡ Fast Delivery'}</span>
+            <span>{product.price >= 499 ? t('free_delivery') : t('fast_delivery')}</span>
           </div>
 
           {/* Action Button / Quantity Counter */}
@@ -403,7 +403,7 @@ export default function ProductCard({ product }) {
                 disabled={isOutOfStock}
                 className="w-full h-10 rounded-xl font-bold text-xs shadow-sm bg-primary-500 hover:bg-primary-600 active:scale-95 text-white transition-all flex items-center justify-center gap-1.5 shadow-primary-500/20 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed"
               >
-                {isOutOfStock ? t('out_of_stock') : (isLoose ? '⚖️ Select Qty' : t('add_to_cart'))}
+                {isOutOfStock ? t('out_of_stock') : (isLoose ? t('select_qty') : t('add_to_cart'))}
               </button>
             )}
           </div>

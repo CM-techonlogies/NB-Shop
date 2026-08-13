@@ -75,7 +75,7 @@ export default function Navbar() {
               <div className="relative w-full">
                 <input 
                   type="text"
-                  placeholder="Search for groceries, essentials..."
+                  placeholder={t('search_placeholder')}
                   className="w-full bg-gray-50 border border-gray-200 rounded-full py-2 pl-5 pr-12 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-500 transition-all shadow-inner"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -125,7 +125,7 @@ export default function Navbar() {
                   </Link>
                 ) : (
                   <button onClick={() => openSignIn()} className="bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white px-5 py-2 rounded-full text-sm font-bold transition-all shadow-sm hover:shadow-md">
-                    Login
+                    {t('login')}
                   </button>
                 )}
               </div>

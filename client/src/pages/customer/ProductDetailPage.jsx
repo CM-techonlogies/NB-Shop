@@ -7,10 +7,12 @@ import { STORE_NAME } from '../../constants';
 import ProductGrid from '../../components/product/ProductGrid';
 import { CheckBadgeIcon, ShieldCheckIcon, TruckIcon } from '@heroicons/react/24/outline';
 import Spinner from '../../components/ui/Spinner';
+import { useLanguageStore } from '../../store/languageStore';
 
 export default function ProductDetailPage() {
   const { id } = useParams();
   const { data: productData, isLoading } = useProductById(id);
+  const { t } = useLanguageStore();
 
   // Supabase returns data directly (not nested in .data)
   const product = productData?.data ?? productData;
@@ -114,10 +116,10 @@ export default function ProductDetailPage() {
               </div>
               {product.stock > 0 ? (
                 <div className="flex items-center text-green-600 text-sm font-bold gap-1 bg-green-50 px-3 py-1 rounded-lg">
-                  <CheckBadgeIcon className="w-5 h-5" /> In Stock
+                  <CheckBadgeIcon className="w-5 h-5" /> {t('in_stock')}
                 </div>
               ) : (
-                <div className="text-red-500 text-sm font-bold bg-red-50 px-3 py-1 rounded-lg">Out of Stock</div>
+                <div className="text-red-500 text-sm font-bold bg-red-50 px-3 py-1 rounded-lg">{t('out_of_stock')}</div>
               )}
             </div>
 
@@ -128,14 +130,14 @@ export default function ProductDetailPage() {
                   <span className="text-xl text-gray-400 line-through mb-1">₹{product.mrp}</span>
                 )}
               </div>
-              <p className="text-sm text-green-600 font-medium">Inclusive of all taxes</p>
+              <p className="text-sm text-green-600 font-medium">{t('inclusive_of_taxes')}</p>
             </div>
 
             {/* Action Area */}
             <div className="mb-8 p-6 bg-gray-50 rounded-2xl border border-gray-100">
               {cartItem ? (
                 <div className="flex items-center gap-6">
-                  <span className="text-gray-700 font-semibold">Quantity in Cart:</span>
+                  <span className="text-gray-700 font-semibold">{t('quantity_in_cart')}</span>
                   <div className="flex items-center bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden h-12 w-32">
                     <button
                       onClick={() => updateQuantity(cartItem.id, cartItem.qty - 1)}
@@ -155,7 +157,7 @@ export default function ProductDetailPage() {
                   disabled={product.stock <= 0}
                   className="w-full bg-primary-500 hover:bg-primary-600 disabled:bg-gray-400 text-white font-bold py-4 rounded-xl transition-all transform active:scale-95 text-lg"
                 >
-                  {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
+                  {product.stock > 0 ? t('add_to_cart') : t('out_of_stock')}
                 </button>
               )}
             </div>
@@ -164,18 +166,18 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl text-blue-700">
                 <ShieldCheckIcon className="w-6 h-6" />
-                <span className="text-sm font-semibold">Quality Assured</span>
+                <span className="text-sm font-semibold">{t('quality_assured')}</span>
               </div>
               <div className="flex items-center gap-3 p-3 bg-green-50 rounded-xl text-green-700">
                 <TruckIcon className="w-6 h-6" />
-                <span className="text-sm font-semibold">Fast Delivery</span>
+                <span className="text-sm font-semibold">{t('fast_delivery')}</span>
               </div>
             </div>
 
             {/* Description */}
             {product.description && (
               <div>
-                <h3 className="text-lg font-bold mb-3 font-heading text-gray-800">Product Details</h3>
+                <h3 className="text-lg font-bold mb-3 font-heading text-gray-800">{t('product_details')}</h3>
                 <p className="text-gray-600 leading-relaxed whitespace-pre-line">{product.description}</p>
               </div>
             )}
@@ -186,7 +188,7 @@ export default function ProductDetailPage() {
       {/* Related Products */}
       {relatedProducts.length > 0 && (
         <div className="mt-16">
-          <h2 className="text-2xl font-bold font-heading mb-6 border-b pb-2">Similar Products</h2>
+          <h2 className="text-2xl font-bold font-heading mb-6 border-b pb-2">{t('similar_products')}</h2>
           <ProductGrid products={relatedProducts} isLoading={relatedLoading} skeletonCount={4} />
         </div>
       )}

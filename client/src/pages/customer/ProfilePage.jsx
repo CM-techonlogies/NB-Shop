@@ -5,10 +5,12 @@ import { useAuth } from '../../hooks/useAuth';
 import { userService } from '../../services/user.service';
 import { STORE_NAME } from '../../constants';
 import Spinner from '../../components/ui/Spinner';
+import { useLanguageStore } from '../../store/languageStore';
 import toast from 'react-hot-toast';
 
 export default function ProfilePage() {
   const { logout } = useAuth();
+  const { t, language } = useLanguageStore();
   const queryClient = useQueryClient();
 
   const [editing, setEditing] = useState(false);
@@ -58,7 +60,7 @@ export default function ProfilePage() {
   return (
     <div className="animate-fadeIn max-w-3xl mx-auto px-4 py-12">
       <Helmet>
-        <title>My Profile - {STORE_NAME}</title>
+        <title>{t('profile')} - {STORE_NAME}</title>
       </Helmet>
 
       <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
@@ -78,14 +80,14 @@ export default function ProfilePage() {
                 onClick={() => setEditing(true)}
                 className="bg-primary-50 hover:bg-primary-100 text-primary-600 font-bold px-4 py-2 rounded-xl text-sm transition-colors"
               >
-                Edit Profile
+                {t('edit_profile')}
               </button>
             ) : (
               <button
                 onClick={() => setEditing(false)}
                 className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2 rounded-xl text-sm transition-colors"
               >
-                Cancel
+                {t('cancel')}
               </button>
             )}
           </div>
@@ -97,7 +99,7 @@ export default function ProfilePage() {
 
             <div className="space-y-4 max-w-lg mt-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t('full_name_label')}</label>
                 {editing ? (
                   <input
                     type="text"
@@ -114,7 +116,7 @@ export default function ProfilePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
+                <label className="block text-sm font-semibold text-gray-700 mb-1">{t('phone_number_label')}</label>
                 {editing ? (
                   <div className="flex">
                     <span className="flex items-center px-3 bg-gray-100 border border-r-0 border-gray-300 rounded-l-xl text-gray-500 text-sm">+91</span>
@@ -136,7 +138,7 @@ export default function ProfilePage() {
 
               {displayEmail && (
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">{t('email_label')}</label>
                   <p className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-500 text-sm">
                     {displayEmail}
                   </p>
@@ -149,7 +151,7 @@ export default function ProfilePage() {
                   disabled={updateMutation.isPending}
                   className="w-full bg-primary-500 hover:bg-primary-600 disabled:bg-gray-400 text-white font-bold py-3 rounded-xl shadow transition-colors flex items-center justify-center gap-2"
                 >
-                  {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
+                  {updateMutation.isPending ? t('saving') : t('save_changes')}
                 </button>
               )}
             </div>
@@ -158,7 +160,7 @@ export default function ProfilePage() {
           {/* Member since */}
           {profile?.created_at && (
             <p className="text-xs text-gray-400 mb-6 text-center">
-              Member since {new Date(profile.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}
+              {t('member_since')} {new Date(profile.created_at).toLocaleDateString(language === 'hi' ? 'hi-IN' : 'en-IN', { month: 'long', year: 'numeric' })}
             </p>
           )}
 
@@ -167,7 +169,7 @@ export default function ProfilePage() {
             onClick={logout}
             className="w-full bg-red-50 hover:bg-red-100 text-red-600 font-bold py-4 rounded-xl transition-colors border border-red-200"
           >
-            Logout
+            {t('logout')}
           </button>
         </div>
       </div>
