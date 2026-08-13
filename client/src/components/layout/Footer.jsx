@@ -12,9 +12,13 @@ export default function Footer() {
               <img src="/logo.jpg" alt={STORE_NAME} className="h-10 w-10 object-contain rounded-lg bg-white p-0.5" />
               <h3 className="text-2xl font-heading font-bold text-primary-400">{STORE_NAME}</h3>
             </div>
-            <p className="text-gray-400 text-sm leading-relaxed max-w-sm">
-              Your trusted local Kirana store. Fresh groceries, daily essentials, and household items delivered right to your doorstep.
-            </p>
+            <div className="text-gray-300 text-sm leading-relaxed space-y-1 max-w-sm">
+              <p className="font-bold text-white text-base">M/s NAVARAM BHUBAJI</p>
+              <p className="text-xs text-gray-400 font-mono">GST NO.- 08DAYPK0127D1ZO(ओ)</p>
+              <p className="text-xs text-gray-300 font-medium">☎️ 02971-294111</p>
+              <p className="text-xs text-amber-400 font-medium">"सभी प्रकार की किराना & प्रोविजनल आइटम्स उपलब्ध..."</p>
+              <p className="text-xs text-gray-400 font-semibold">®Since - 1956</p>
+            </div>
             <a href={`https://wa.me/${OWNER_WHATSAPP}`} className="inline-flex items-center gap-2 mt-6 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-green-400 text-sm font-medium transition-colors">
               <span>💬</span> Chat on WhatsApp
             </a>
@@ -37,7 +41,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="border-t border-gray-800 mt-10 pt-6 text-center text-sm text-gray-500">
-          <p>© 1957–{new Date().getFullYear()} Navaram Bhubaji Kirana Store | All Rights Reserved.</p>
+          <p>© 1956–{new Date().getFullYear()} Navaram Bhubaji Kirana Store | All Rights Reserved.</p>
         </div>
       </div>
     </footer>
