@@ -1,5 +1,5 @@
 /**
- * WhatsApp redirect utility (wa.me / click-to-chat)
+ * WhatsApp redirect utility (wa.me / api.whatsapp.com)
  * No API token required — opens WhatsApp with a pre-filled message.
  * On mobile: opens WhatsApp app. On desktop: opens WhatsApp Web.
  */
@@ -30,26 +30,27 @@ const formatOrderDate = (dStr) => {
 };
 
 /**
- * Build the wa.me URL for sending order details to the owner.
- * @param {object} order  - Supabase order object (or plain order data)
- * @param {Array}  items  - cart items or order_items
+ * Build the WhatsApp URL for sending order details to the owner.
+ * Works seamlessly across iOS Safari, Android Chrome, and Desktop.
+ * @param {object} order   - Supabase order object (or plain order data)
+ * @param {Array}  items   - cart items or order_items
  * @param {object} address - shipping address object
- * @returns {string} wa.me URL with encoded message
+ * @returns {string} WhatsApp API URL with encoded message
  */
 export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
-  if (!OWNER_PHONE) return null;
+  const phone = (OWNER_PHONE || '').replace(/\D/g, '');
+  if (!phone) return null;
 
   const invoiceId  = order?.invoice_id || order?.invoiceId || order?.id || '—';
   const subtotal   = parseFloat(order?.subtotal   ?? 0);
-  // Use delivery_charge from order; if 0 but subtotal < 499, recalculate
-  let delivery = parseFloat(order?.delivery_charge ?? order?.deliveryCharge ?? 0);
+  let delivery     = parseFloat(order?.delivery_charge ?? order?.deliveryCharge ?? 0);
   if (delivery === 0 && subtotal > 0 && subtotal < 499) {
-    delivery = 40; // fallback to default delivery charge
+    delivery = 40;
   }
   const total = parseFloat(order?.total ?? order?.totalAmount ?? subtotal + delivery);
 
   const name     = address.fullName || address.name || 'Customer';
-  const phone    = (address.phone || '').replace(/\D/g, '');
+  const custPhone = (address.phone || '').replace(/\D/g, '');
   const addr     = address.addressLine || address.address || '';
   const landmark = address.landmark || '';
   const city     = address.city || '';
@@ -60,18 +61,17 @@ export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
   const dateFormatted = formatOrderDate(order?.created_at || order?.createdAt);
 
   const itemLines = items.map((item) => {
-    const isLoose = item.customQty !== undefined;
+    const isLoose = item.customQty !== undefined || item.is_loose;
     const customQty = item.customQty;
     const unit = item.unit || '';
-    const qty = isLoose ? customQty : (item.qty ?? item.quantity ?? 1);
+    const qty = isLoose ? (customQty || item.quantity || item.qty || 1) : (item.qty ?? item.quantity ?? 1);
     const baseName = item.name || item.product?.name || 'Product';
-    // Add (Loose) in brackets so shopkeeper knows it's a loose/weighment item
     const pname = isLoose ? `${baseName} (Loose)` : baseName;
     const price = parseFloat(item.price || 0);
     const itemTotal = price * qty;
 
     const qtyLabel = isLoose
-      ? (item.customDisplay || `${qty} ${unit}`)  // show "500 g" if user selected grams
+      ? (item.customDisplay || `${qty} ${unit}`)
       : `${qty} pcs`;
 
     return `• ${pname}\n  Qty : ${qtyLabel} × ₹${price.toFixed(0)} = ₹${itemTotal.toFixed(0)}`;
@@ -81,7 +81,6 @@ export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
     ? `\nLocation:\n${mapsUrl}`
     : '';
 
-  // Clean address lines with leading space per user template spec
   const addressLines = [
     addr ? ` ${addr}` : null,
     landmark ? ` ${landmark}` : null,
@@ -104,19 +103,20 @@ Delivery : ${delivery === 0 ? 'FREE' : `₹${delivery.toFixed(0)}`}
 *CUSTOMER DETAILS*
 
 Customer : ${name}
- +91 ${phone}
+ +91 ${custPhone}
 
 ${addressLines}
 ${locationSection}
 
 Please prepare this order.`;
 
-  return `https://wa.me/${OWNER_PHONE}?text=${encodeURIComponent(message)}`;
+  // api.whatsapp.com/send is universally supported on iOS Safari & Android Chrome without extra HTTP 301 redirects
+  return `https://api.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(message)}`;
 };
 
 /**
- * Open WhatsApp with the order details in a new tab.
- * Returns false if owner phone is not configured.
+ * Trigger WhatsApp redirect for order details.
+ * Uses window.location.href instead of window.open() to bypass iOS Safari popup blockers.
  */
 export const sendOrderToOwnerWhatsApp = (order, items, address) => {
   const url = buildOwnerWhatsAppUrl(order, items, address);
@@ -124,6 +124,9 @@ export const sendOrderToOwnerWhatsApp = (order, items, address) => {
     console.warn('VITE_OWNER_WHATSAPP not set in .env');
     return false;
   }
-  window.open(url, '_blank', 'noopener,noreferrer');
+
+  // Directly set location.href — iOS Safari allows top-level navigation inside async handlers,
+  // whereas window.open() gets silently blocked by iOS popup blocker.
+  window.location.href = url;
   return true;
 };

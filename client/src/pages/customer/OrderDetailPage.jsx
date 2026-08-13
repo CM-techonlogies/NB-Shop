@@ -5,6 +5,7 @@ import { useOrderById, useUploadPaymentScreenshot } from '../../hooks/useOrders'
 import { useCart } from '../../hooks/useCart';
 import OrderTimeline from '../../components/order/OrderTimeline';
 import { STORE_NAME } from '../../constants';
+import { sendOrderToOwnerWhatsApp } from '../../utils/whatsapp';
 import Spinner from '../../components/ui/Spinner';
 import toast from 'react-hot-toast';
 
@@ -270,6 +271,19 @@ export default function OrderDetailPage() {
                 </a>
               )}
             </div>
+          </div>
+
+          {/* WhatsApp Direct Action Button */}
+          <div className="bg-white p-6 rounded-2xl shadow-card">
+            <h3 className="font-bold font-heading text-lg mb-2">Send Order to Store</h3>
+            <p className="text-xs text-gray-500 mb-4">Tap below to open WhatsApp with your full order details and address.</p>
+            <button
+              onClick={() => sendOrderToOwnerWhatsApp(order, items, address)}
+              className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2 active:scale-95"
+            >
+              <span className="text-lg">💬</span>
+              <span>Send Order on WhatsApp</span>
+            </button>
           </div>
 
           {/* Price Summary */}

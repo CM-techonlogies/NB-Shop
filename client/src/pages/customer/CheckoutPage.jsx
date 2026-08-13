@@ -134,7 +134,10 @@ export default function CheckoutPage() {
       // Open WhatsApp with pre-filled order message + GPS navigation link for owner
       sendOrderToOwnerWhatsApp(order, cart, shippingAddress);
 
-      navigate(`/order/${orderId}`);
+      // Delay SPA navigation slightly so iOS Safari registers the WhatsApp deep link redirect
+      setTimeout(() => {
+        navigate(`/order/${orderId}`);
+      }, 500);
     } catch (error) {
       const msg =
         error?.response?.data?.message ||
