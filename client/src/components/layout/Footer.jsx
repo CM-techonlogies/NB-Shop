@@ -19,9 +19,6 @@ export default function Footer() {
               <p className="text-xs text-amber-400 font-medium">"सभी प्रकार की किराना & प्रोविजनल आइटम्स उपलब्ध..."</p>
               <p className="text-xs text-gray-400 font-semibold">®Since - 1956</p>
             </div>
-            <a href={`https://wa.me/${OWNER_WHATSAPP}`} className="inline-flex items-center gap-2 mt-6 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-green-400 text-sm font-medium transition-colors">
-              <span>💬</span> Chat on WhatsApp
-            </a>
           </div>
           <div>
             <h4 className="font-semibold mb-4 text-gray-300 text-sm uppercase tracking-wider">Quick Links</h4>
