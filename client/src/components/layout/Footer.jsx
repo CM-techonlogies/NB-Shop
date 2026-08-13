@@ -36,9 +36,8 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-        <div className="border-t border-gray-800 mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-500">
-          <p>© {new Date().getFullYear()} {STORE_NAME}. All rights reserved.</p>
-          <p>Made with ❤️ for our local community.</p>
+        <div className="border-t border-gray-800 mt-10 pt-6 text-center text-sm text-gray-500">
+          <p>© 1957–{new Date().getFullYear()} Navaram Bhubaji Kirana Store | All Rights Reserved.</p>
         </div>
       </div>
     </footer>
