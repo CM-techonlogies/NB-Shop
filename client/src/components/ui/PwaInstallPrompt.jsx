@@ -13,61 +13,76 @@ export default function PwaInstallPrompt() {
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    // Already installed as PWA — never show banner
-    if (isInStandaloneMode()) {
+    // ── Already installed as PWA ──────────────────────────────────
+    if (isInStandaloneMode() || localStorage.getItem('pwa-installed')) {
       setInstalled(true);
       return;
     }
 
-    // Already dismissed by user this session
-    if (sessionStorage.getItem('pwa-banner-dismissed')) return;
+    // ── User permanently dismissed (clicked ✕) ───────────────────
+    if (localStorage.getItem('pwa-dismissed')) return;
 
-    // iOS: show banner immediately (no beforeinstallprompt on iOS)
+    // ── If prompt was already captured earlier in this SPA session ─
+    // (beforeinstallprompt only fires ONCE per browser session;
+    //  storing it on window keeps it alive across React re-mounts)
+    if (window.__pwaPrompt) {
+      setDeferredPrompt(window.__pwaPrompt);
+      setShowBanner(true);
+      return;
+    }
+
+    // ── iOS: no install event — show banner immediately ───────────
     if (isIos()) {
       setShowBanner(true);
       return;
     }
 
-    // Android/Chrome: wait for beforeinstallprompt event
-    const handler = (e) => {
-      e.preventDefault();      // prevent mini-infobar
-      setDeferredPrompt(e);    // save event to trigger later
+    // ── Android/Chrome: listen for beforeinstallprompt ────────────
+    const handlePrompt = (e) => {
+      e.preventDefault();
+      window.__pwaPrompt = e;       // persist on window for SPA navigation
+      setDeferredPrompt(e);
       setShowBanner(true);
     };
 
-    const installedHandler = () => {
+    const handleInstalled = () => {
+      localStorage.setItem('pwa-installed', '1');
+      window.__pwaPrompt = null;
       setInstalled(true);
       setShowBanner(false);
       setDeferredPrompt(null);
     };
 
-    window.addEventListener('beforeinstallprompt', handler);
-    window.addEventListener('appinstalled', installedHandler);
+    window.addEventListener('beforeinstallprompt', handlePrompt);
+    window.addEventListener('appinstalled', handleInstalled);
     return () => {
-      window.removeEventListener('beforeinstallprompt', handler);
-      window.removeEventListener('appinstalled', installedHandler);
+      window.removeEventListener('beforeinstallprompt', handlePrompt);
+      window.removeEventListener('appinstalled', handleInstalled);
     };
   }, []);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // Triggers native Chrome "Install and create shortcut" dialog
+      // Triggers native "Install and create shortcut" dialog
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
+        localStorage.setItem('pwa-installed', '1');
+        window.__pwaPrompt = null;
         setInstalled(true);
         setShowBanner(false);
       }
       setDeferredPrompt(null);
+      window.__pwaPrompt = null;
     } else if (isIos()) {
-      // iOS: show manual step-by-step modal
       setShowIosModal(true);
     }
   };
 
+  // Permanently dismiss (won't show again until localStorage is cleared)
   const handleDismiss = () => {
     setShowBanner(false);
-    sessionStorage.setItem('pwa-banner-dismissed', '1');
+    localStorage.setItem('pwa-dismissed', '1');
   };
 
   if (installed || !showBanner) return null;
@@ -96,7 +111,7 @@ export default function PwaInstallPrompt() {
           <button
             onClick={handleDismiss}
             className="text-white/80 hover:text-white text-base leading-none p-1 font-bold"
-            title="Close"
+            title="Dismiss"
           >
             ✕
           </button>
@@ -110,7 +125,7 @@ export default function PwaInstallPrompt() {
           onClick={() => setShowIosModal(false)}
         >
           <div
-            className="bg-white rounded-t-3xl p-6 w-full max-w-sm shadow-2xl animate-slideUp"
+            className="bg-white rounded-t-3xl p-6 w-full max-w-sm shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="text-center mb-5">
