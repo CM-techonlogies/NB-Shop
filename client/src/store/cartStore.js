@@ -36,11 +36,46 @@ const useCartStore = create((set, get) => ({
   currentUserId: initialUserId,
   deliveryCharge: DELIVERY_CHARGE,
 
-  // Load user-specific cart when user logs in or switches
+  // Load user-specific cart when user logs in or switches (merges guest cart into user cart)
   loadUserCart: (userId) => {
     const activeUserId = userId || 'guest';
-    const saved = loadSavedCart(activeUserId);
-    set({ currentUserId: activeUserId, items: saved });
+    if (activeUserId === 'guest') {
+      const guestItems = loadSavedCart('guest');
+      set({ currentUserId: 'guest', items: guestItems });
+      return;
+    }
+
+    const savedUserItems = loadSavedCart(activeUserId);
+    const guestItems = loadSavedCart('guest');
+
+    if (Array.isArray(guestItems) && guestItems.length > 0) {
+      // Seamlessly merge guest items into the user's saved cart
+      const merged = [...savedUserItems];
+      guestItems.forEach((gItem) => {
+        const key = gItem.id || gItem._id;
+        const existingIdx = merged.findIndex((i) => matchId(i, key));
+        if (existingIdx >= 0) {
+          if (gItem.customQty !== undefined) {
+            merged[existingIdx] = { ...merged[existingIdx], customQty: gItem.customQty };
+          } else {
+            merged[existingIdx] = {
+              ...merged[existingIdx],
+              qty: (merged[existingIdx].qty || 1) + (gItem.qty || 1),
+            };
+          }
+        } else {
+          merged.push(gItem);
+        }
+      });
+
+      // Clear guest cart so it doesn't duplicate on next login
+      saveUserCart('guest', []);
+      // Save the merged cart under current user ID
+      saveUserCart(activeUserId, merged);
+      set({ currentUserId: activeUserId, items: merged });
+    } else {
+      set({ currentUserId: activeUserId, items: savedUserItems });
+    }
   },
 
   // Clear current UI cart items (e.g. after order placed), and update storage
