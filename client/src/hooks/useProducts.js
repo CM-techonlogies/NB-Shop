@@ -37,7 +37,7 @@ export const useFeaturedProducts = () => {
   return useQuery({
     queryKey: ['products', 'featured'],
     queryFn: () => productService.getFeatured().then(r => extractArray(r)),
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // featured list changes rarely
   });
 };
 
@@ -45,7 +45,7 @@ export const useTrendingProducts = () => {
   return useQuery({
     queryKey: ['products', 'trending'],
     queryFn: () => productService.getTrending().then(r => extractArray(r)),
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,
   });
 };
 
@@ -53,7 +53,7 @@ export const useNewArrivals = () => {
   return useQuery({
     queryKey: ['products', 'new-arrivals'],
     queryFn: () => productService.getNewArrivals().then(r => extractArray(r)),
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,
   });
 };
 
@@ -71,7 +71,7 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories().then(r => extractArray(r)),
-    staleTime: 30 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // categories change very rarely — cache for 1 hour
   });
 };
 
@@ -88,6 +88,7 @@ export const useCategoryBySlug = (slug) => {
     queryKey: ['categories', slug],
     queryFn: () => categoryService.getCategoryBySlug(slug).then(r => r?.data?.data || r?.data || null),
     enabled: !!slug,
+    staleTime: 60 * 60 * 1000,
   });
 };
 
@@ -110,6 +111,6 @@ export const useBanners = () => {
     queryFn: () =>
       productService.getProducts ? 
       import('../services/api').then(m => m.default.get('/banners')).then(r => extractArray(r)) : [],
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 60 * 1000,
   });
 };

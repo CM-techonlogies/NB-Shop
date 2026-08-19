@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { useLanguageStore } from '../../store/languageStore';
 import { formatPrice, formatDiscount } from '../../utils/formatPrice';
+import LazyImage from '../ui/LazyImage';
 
 // ─── Unit helpers ─────────────────────────────────────────────────────────────
 const SUB_UNITS = {
@@ -313,16 +314,13 @@ export default function ProductCard({ product }) {
 
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden bg-gray-50/50 rounded-xl p-3 flex items-center justify-center mb-3">
-          {rawImageUrl ? (
-            <img
-              src={rawImageUrl}
-              alt={product.name}
-              className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-            />
-          ) : (
-            <span className="text-5xl text-gray-300">🛒</span>
-          )}
+          <LazyImage
+            src={rawImageUrl}
+            alt={product.name}
+            className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
+            wrapperClassName="w-full h-full"
+            fallback={<span className="text-5xl text-gray-300">🛒</span>}
+          />
           {isOutOfStock && (
             <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] flex items-center justify-center z-10">
               <span className="bg-gray-900 text-white text-xs font-bold px-3 py-1.5 rounded-full uppercase tracking-wider">

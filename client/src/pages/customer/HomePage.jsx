@@ -94,6 +94,9 @@ export default function HomePage() {
                     src={slide.image_url}
                     alt={slide.title || 'Promo Banner'}
                     className="w-full h-full object-cover"
+                    loading="eager"
+                    decoding="async"
+                    fetchpriority="high"
                   />
                   {slide.title && (
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent flex items-end p-6 text-white">

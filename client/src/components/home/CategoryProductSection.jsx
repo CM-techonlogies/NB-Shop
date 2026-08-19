@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useProductsByCategory } from '../../hooks/useProducts';
@@ -35,17 +35,43 @@ const VIEW_MORE_COLORS = [
 ];
 
 /**
- * A single horizontal-scroll section for one category, showing up to `limit` products
+ * A single horizontal-scroll section for one category.
+ * API fetch is deferred until the section is within ~300px of the viewport
+ * (IntersectionObserver) to avoid N parallel requests on page load.
+ * First `eagerCount` sections are fetched immediately (above-the-fold).
  */
-export default function CategoryProductSection({ category, index, limit = 5 }) {
+export default function CategoryProductSection({ category, index, limit = 5, eagerCount = 2 }) {
   const colorIdx = index % SECTION_GRADIENTS.length;
-  const { data: products = [], isLoading } = useProductsByCategory(
-    category.id || category._id,
-    limit
-  );
+  const sectionRef = useRef(null);
 
-  // Don't render section if no products and not loading
-  if (!isLoading && products.length === 0) return null;
+  // First `eagerCount` sections load immediately; the rest wait for viewport proximity
+  const [shouldFetch, setShouldFetch] = useState(index < eagerCount);
+
+  useEffect(() => {
+    if (shouldFetch) return; // already fetching
+    const el = sectionRef.current;
+    if (!el || !('IntersectionObserver' in window)) {
+      setShouldFetch(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setShouldFetch(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '300px' } // start loading 300px before visible
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [shouldFetch]);
+
+  const categoryId = shouldFetch ? (category.id || category._id) : null;
+  const { data: products = [], isLoading } = useProductsByCategory(categoryId, limit);
+
+  // Don't render section if fetch is done and there are no products
+  if (!isLoading && shouldFetch && products.length === 0) return null;
 
   const catImg = category.image_url || category.image?.url || (typeof category.image === 'string' ? category.image : null);
   const emoji   = CATEGORY_EMOJIS[category.name] || '🛍️';
@@ -54,10 +80,11 @@ export default function CategoryProductSection({ category, index, limit = 5 }) {
 
   return (
     <motion.section
+      ref={sectionRef}
       initial={{ opacity: 0, y: 28 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-60px' }}
-      transition={{ duration: 0.45, delay: index * 0.05 }}
+      transition={{ duration: 0.45, delay: Math.min(index, 3) * 0.05 }}
       className={`rounded-2xl border bg-gradient-to-r ${SECTION_GRADIENTS[colorIdx]} p-5 mb-8`}
     >
       {/* Section Header */}
@@ -65,7 +92,7 @@ export default function CategoryProductSection({ category, index, limit = 5 }) {
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-2xl overflow-hidden border border-gray-100 flex-shrink-0">
             {catImg ? (
-              <img src={catImg} alt={category.name} className="w-full h-full object-cover" />
+              <img src={catImg} alt={category.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
               <span>{emoji}</span>
             )}
@@ -89,7 +116,8 @@ export default function CategoryProductSection({ category, index, limit = 5 }) {
 
       {/* Horizontal Scroll Product Strip */}
       <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-        {isLoading
+        {/* Show skeletons while loading OR while not yet fetching (placeholder) */}
+        {(!shouldFetch || isLoading)
           ? Array.from({ length: limit }).map((_, i) => (
               <div key={i} className="flex-shrink-0 w-40 md:w-48">
                 <SkeletonProductCard />
@@ -103,13 +131,13 @@ export default function CategoryProductSection({ category, index, limit = 5 }) {
         }
 
         {/* View More Tile */}
-        {!isLoading && products.length >= limit && (
+        {shouldFetch && !isLoading && products.length >= limit && (
           <Link
             to={catLink}
             className="flex-shrink-0 w-40 md:w-48 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-300 hover:border-gray-400 bg-white/70 hover:bg-white transition-all group min-h-[200px]"
           >
             {catImg ? (
-              <img src={catImg} alt={category.name} className="w-12 h-12 rounded-full object-cover shadow-sm group-hover:scale-110 transition-transform p-0.5 border" />
+              <img src={catImg} alt={category.name} className="w-12 h-12 rounded-full object-cover shadow-sm group-hover:scale-110 transition-transform p-0.5 border" loading="lazy" decoding="async" />
             ) : (
               <span className="text-4xl group-hover:scale-110 transition-transform">{emoji}</span>
             )}
