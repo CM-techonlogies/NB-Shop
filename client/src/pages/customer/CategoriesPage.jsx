@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useCategories } from '../../hooks/useProducts';
 import { STORE_NAME } from '../../constants';
-import { SkeletonCategoryCard } from '../../components/ui/Skeleton';
 import { motion } from 'framer-motion';
 
 const baseUrl = import.meta.env.VITE_CLIENT_URL || '';
@@ -43,10 +42,39 @@ export default function CategoriesPage() {
         <title>All Categories - {STORE_NAME}</title>
       </Helmet>
 
-      <div className="text-center mb-12">
-        <h1 className="text-3xl md:text-5xl font-black font-heading text-gray-900 mb-4">Shop by Category</h1>
-        <p className="text-gray-500 max-w-2xl mx-auto text-lg">Find everything you need for your home, carefully organized for your convenience.</p>
+      {/* ── Page Header ─────────────────────────────────────────── */}
+      <div className="text-center mb-6">
+        <h1 className="text-3xl md:text-5xl font-black font-heading text-gray-900 mb-3">Shop by Category</h1>
+        <p className="text-gray-500 max-w-2xl mx-auto text-base">Find everything you need for your home, carefully organized for your convenience.</p>
       </div>
+
+      {/* ── Browse All Products Banner ───────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35 }}
+        className="mb-8"
+      >
+        <Link
+          to="/products"
+          className="flex items-center justify-between bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 active:scale-[0.98] text-white px-5 py-4 rounded-2xl shadow-lg shadow-orange-200 transition-all duration-200 group"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🛍️</span>
+            <div className="text-left">
+              <p className="font-black text-base leading-tight">Browse All Products</p>
+              <p className="text-white/80 text-xs font-medium mt-0.5">
+                {isLoading ? 'Loading...' : `${categories.length > 0 ? `${categories.length} categories` : 'All items'} available`}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-xl group-hover:bg-white/30 transition-colors whitespace-nowrap">
+              See All →
+            </span>
+          </div>
+        </Link>
+      </motion.div>
 
       {isLoading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">

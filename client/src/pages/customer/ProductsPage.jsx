@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import ProductGrid from '../../components/product/ProductGrid';
@@ -11,6 +11,7 @@ import {
   ArrowPathIcon,
   Squares2X2Icon,
   ListBulletIcon,
+  XMarkIcon,
 } from '@heroicons/react/24/outline';
 
 const SORT_OPTIONS = [
@@ -181,23 +182,93 @@ export default function ProductsPage() {
     setPage(1);
   };
 
+  // ── Live search debounce ──────────────────────────────────────────────────
+  const searchInputRef = useRef(null);
+  const debounceRef = useRef(null);
+
+  const handleSearchInput = (val) => {
+    setSearch(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (val.trim()) params.set('search', val.trim());
+      if (category) params.set('category', category);
+      if (sort) params.set('sort', sort);
+      setSearchParams(params);
+      setPage(1);
+    }, 350);
+  };
+
+  const clearSearch = () => {
+    setSearch('');
+    const params = new URLSearchParams();
+    if (category) params.set('category', category);
+    if (sort) params.set('sort', sort);
+    setSearchParams(params);
+    setPage(1);
+    searchInputRef.current?.focus();
+  };
+
   return (
     <div className="animate-fadeIn max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <Helmet>
         <title>All Products - {STORE_NAME}</title>
       </Helmet>
 
+      {/* ── TOP SEARCH BAR ──────────────────────────────────────────── */}
+      <div className="mb-4">
+        <div className="relative flex items-center gap-2">
+          {/* Big search input */}
+          <div className="relative flex-1">
+            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={search}
+              onChange={e => handleSearchInput(e.target.value)}
+              placeholder="Search products by name..."
+              className="w-full pl-11 pr-10 py-3.5 bg-white border-2 border-gray-200 focus:border-primary-500 focus:ring-4 focus:ring-primary-100 rounded-2xl text-sm font-medium text-gray-800 outline-none transition-all shadow-sm placeholder:text-gray-400"
+            />
+            {search && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-all"
+              >
+                <XMarkIcon className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Filter toggle pill */}
+          <button
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={`flex items-center gap-2 px-4 py-3.5 rounded-2xl border-2 font-bold text-sm transition-all shadow-sm whitespace-nowrap ${
+              isFilterOpen || activeFilterChips.length > 0
+                ? 'bg-orange-50 border-primary-500 text-primary-600'
+                : 'bg-white border-gray-200 text-gray-700 hover:border-gray-300'
+            }`}
+          >
+            <FunnelIcon className="w-4 h-4" />
+            <span className="hidden sm:inline">Filters</span>
+            {activeFilterChips.length > 0 && (
+              <span className="bg-primary-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
+                {activeFilterChips.length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Search hint */}
+        {search && (
+          <p className="text-xs text-gray-500 mt-2 ml-1">
+            Searching for <span className="font-bold text-gray-700">"{search}"</span>
+            {!isLoading && ` — ${filteredProducts.length} result${filteredProducts.length !== 1 ? 's' : ''} found`}
+          </p>
+        )}
+      </div>
+
       {/* Main Layout Grid */}
       <div className="flex flex-col lg:flex-row gap-6">
-        
-        {/* Mobile Filter Drawer Button */}
-        <button
-          onClick={() => setIsFilterOpen(!isFilterOpen)}
-          className="lg:hidden w-full bg-white border border-gray-200 p-3 rounded-2xl flex items-center justify-center gap-2 font-bold text-gray-800 shadow-sm"
-        >
-          <FunnelIcon className="w-5 h-5 text-primary-500" />
-          {isFilterOpen ? 'Hide Filters' : 'Show Filters'}
-        </button>
 
         {/* ── LEFT SIDEBAR FILTERS ─────────────────────────────────── */}
         <aside className={`lg:w-72 flex-shrink-0 ${isFilterOpen ? 'block' : 'hidden lg:block'}`}>
@@ -219,21 +290,6 @@ export default function ProductsPage() {
             </div>
 
             <form onSubmit={handleApplyFilters} className="space-y-5">
-              
-              {/* Search */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Search</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search products..."
-                    className="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all"
-                  />
-                  <MagnifyingGlassIcon className="w-4 h-4 text-gray-400 absolute left-3 top-2.5" />
-                </div>
-              </div>
 
               {/* Category */}
               <div>
