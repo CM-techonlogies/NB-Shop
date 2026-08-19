@@ -9,8 +9,31 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.jpg'],
       workbox: {
+        // Immediately take control without waiting for old SW to die
+        clientsClaim: true,
+        skipWaiting: true,
+        // Remove outdated caches when new SW activates
+        cleanupOutdatedCaches: true,
         // ── Runtime caching rules ─────────────────────────────────────────
+        // IMPORTANT: HTML navigation requests use NetworkFirst so that after a
+        // new deployment the browser always gets fresh HTML with up-to-date
+        // chunk filenames — prevents "Importing a module script failed" errors.
+        navigateFallback: null,
         runtimeCaching: [
+          // 0. HTML navigation — always try network first (fixes stale chunk URLs)
+          {
+            urlPattern: ({ request }) => request.mode === 'navigate',
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'html-pages',
+              networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 5,
+                maxAgeSeconds: 24 * 60 * 60, // 1 day fallback
+              },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
           // 1. Cache product/category images from Supabase storage or any CDN
           {
             urlPattern: ({ url }) =>

@@ -1,47 +1,131 @@
 import React from 'react';
 
+// ─── Chunk-load failure detector ──────────────────────────────────────────────
+// When Vite pushes a new build, old chunk filenames (hashes) no longer exist.
+// If the Service Worker serves stale HTML and React tries to lazy-import a
+// chunk that was renamed, we get "Importing a module script failed".
+// We detect this once per session and do a hard reload to pick up fresh HTML + chunks.
+const CHUNK_FAIL_KEY = 'chunk_reload_attempted';
+
+function isChunkLoadError(error) {
+  const msg = (error?.message || '').toLowerCase();
+  return (
+    msg.includes('importing a module') ||
+    msg.includes('failed to fetch dynamically') ||
+    msg.includes('dynamically imported module') ||
+    msg.includes('loading chunk') ||
+    msg.includes('loading css chunk') ||
+    msg.includes('import.meta') ||
+    (error?.name === 'TypeError' && msg.includes('load'))
+  );
+}
+
+// ─── Friendly Error UI ────────────────────────────────────────────────────────
+function FriendlyErrorUI({ isChunkError, onRetry, onGoBack }) {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-amber-50 flex items-center justify-center p-5">
+      <div className="w-full max-w-sm">
+        {/* Card */}
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 text-center">
+          {/* Illustration */}
+          <div className="text-7xl mb-5 select-none">
+            {isChunkError ? '🔄' : '😕'}
+          </div>
+
+          {/* Title */}
+          <h1 className="text-xl font-black text-gray-900 mb-2 font-heading">
+            {isChunkError ? 'App Updated!' : 'Something went wrong'}
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-gray-500 text-sm leading-relaxed mb-7">
+            {isChunkError
+              ? "We've pushed an update to the app. Please refresh to get the latest version."
+              : 'This page had a problem loading. Please try again — it usually fixes itself.'}
+          </p>
+
+          {/* Buttons */}
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={onRetry}
+              className="w-full bg-orange-500 hover:bg-orange-600 active:scale-95 text-white font-bold py-3.5 rounded-2xl transition-all shadow-md text-sm"
+            >
+              {isChunkError ? '🔄  Refresh App' : '🔄  Try Again'}
+            </button>
+            <button
+              onClick={onGoBack}
+              className="w-full bg-gray-100 hover:bg-gray-200 active:scale-95 text-gray-700 font-semibold py-3.5 rounded-2xl transition-all text-sm"
+            >
+              ← Go Back
+            </button>
+          </div>
+        </div>
+
+        {/* Small footer hint */}
+        <p className="text-center text-xs text-gray-400 mt-4">
+          NB Shop — If the issue persists, please contact us.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── ErrorBoundary class component ────────────────────────────────────────────
 export default class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, isChunkError: false };
+    this.handleRetry = this.handleRetry.bind(this);
+    this.handleGoBack = this.handleGoBack.bind(this);
   }
 
   static getDerivedStateFromError(error) {
-    return { hasError: true, error };
+    const isChunkError = isChunkLoadError(error);
+    return { hasError: true, error, isChunkError };
   }
 
   componentDidCatch(error, info) {
-    console.error('ErrorBoundary caught:', error, info);
+    // Only log in dev — never expose raw errors to users in prod
+    if (import.meta.env.DEV) {
+      console.error('[ErrorBoundary]', error, info);
+    }
+
+    // Auto-reload once if it's a chunk load error (stale SW cache)
+    if (isChunkLoadError(error)) {
+      const alreadyAttempted = sessionStorage.getItem(CHUNK_FAIL_KEY);
+      if (!alreadyAttempted) {
+        sessionStorage.setItem(CHUNK_FAIL_KEY, '1');
+        // Give the browser a tick, then hard-reload to bypass SW cache
+        setTimeout(() => window.location.reload(true), 400);
+      }
+    }
+  }
+
+  handleRetry() {
+    // Clear the flag so next chunk error also gets one auto-attempt
+    sessionStorage.removeItem(CHUNK_FAIL_KEY);
+    this.setState({ hasError: false, error: null, isChunkError: false });
+    window.location.reload(true);
+  }
+
+  handleGoBack() {
+    sessionStorage.removeItem(CHUNK_FAIL_KEY);
+    this.setState({ hasError: false, error: null, isChunkError: false });
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.location.href = '/';
+    }
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
-          <div className="bg-white rounded-2xl shadow-lg border border-red-100 p-8 max-w-2xl w-full">
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-3xl">❌</span>
-              <h1 className="text-xl font-bold text-red-600">Something went wrong</h1>
-            </div>
-            <div className="bg-red-50 rounded-xl p-4 mb-4">
-              <p className="text-sm font-mono text-red-700 break-all">
-                {this.state.error?.message || 'Unknown error'}
-              </p>
-            </div>
-            <details className="mb-4">
-              <summary className="text-sm text-gray-500 cursor-pointer hover:text-gray-700">Stack trace</summary>
-              <pre className="mt-2 text-xs text-gray-600 bg-gray-50 p-3 rounded-lg overflow-auto max-h-48">
-                {this.state.error?.stack}
-              </pre>
-            </details>
-            <button
-              onClick={() => { this.setState({ hasError: false, error: null }); window.location.reload(); }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors"
-            >
-              Reload Page
-            </button>
-          </div>
-        </div>
+        <FriendlyErrorUI
+          isChunkError={this.state.isChunkError}
+          onRetry={this.handleRetry}
+          onGoBack={this.handleGoBack}
+        />
       );
     }
     return this.props.children;
