@@ -73,7 +73,7 @@ export default function ProductDetailPage() {
   const cartItem = cart.find(item => item.id === productId);
 
   return (
-    <div className="animate-fadeIn bg-[#FFF8F0] min-h-screen">
+    <div className="animate-fadeIn bg-[#FFF8F0] min-h-screen pb-24 md:pb-0">
       <Helmet>
         <title>{`${product.name} - ${STORE_NAME}`}</title>
         <meta name="description" content={product.description || `Buy ${product.name} at NB Shop`} />
@@ -119,7 +119,7 @@ export default function ProductDetailPage() {
                 <img
                   src={rawImages[activeImage]?.url || PLACEHOLDER}
                   alt={product.name}
-                  className="w-full h-44 sm:h-56 md:h-72 object-contain p-3 md:p-6"
+                  className="w-full h-52 sm:h-64 md:h-72 object-contain p-4 md:p-6"
                   onError={e => { e.target.src = PLACEHOLDER; }}
                 />
               </div>
@@ -214,9 +214,9 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Add to Cart / Qty controller */}
+              {/* Add to Cart / Qty controller — hidden on mobile (sticky bar handles it) */}
               {cartItem ? (
-                <div className="flex items-center justify-between bg-primary-50 border border-primary-200 rounded-2xl px-4 py-3 mb-4">
+                <div className="hidden md:flex items-center justify-between bg-primary-50 border border-primary-200 rounded-2xl px-4 py-3 mb-4">
                   <span className="text-sm font-bold text-gray-700">In Cart</span>
                   <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm h-10">
                     <button
@@ -239,7 +239,7 @@ export default function ProductDetailPage() {
                 <button
                   onClick={() => addToCart(product)}
                   disabled={product.stock <= 0}
-                  className="w-full bg-primary-500 hover:bg-primary-600 active:scale-[0.98] disabled:bg-gray-300 text-white font-black py-3.5 rounded-2xl transition-all text-base shadow-md shadow-orange-200 mb-4"
+                  className="hidden md:block w-full bg-primary-500 hover:bg-primary-600 active:scale-[0.98] disabled:bg-gray-300 text-white font-black py-3.5 rounded-2xl transition-all text-base shadow-md shadow-orange-200 mb-4"
                 >
                   {product.stock > 0 ? `🛒 ${t('add_to_cart')}` : t('out_of_stock')}
                 </button>
@@ -283,6 +283,51 @@ export default function ProductDetailPage() {
             <ProductGrid products={relatedProducts} isLoading={relatedLoading} skeletonCount={4} />
           </div>
         )}
+      </div>
+      {/* ── STICKY BOTTOM CART BAR (mobile only) ─────────────────────────── */}
+      <div className="fixed bottom-16 left-0 right-0 z-30 md:hidden px-4 pb-2">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 flex items-center gap-3">
+          {/* Price snapshot */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-lg font-black text-gray-900">₹{product.price}</span>
+              {product.mrp > product.price && (
+                <span className="text-xs text-gray-400 line-through">₹{product.mrp}</span>
+              )}
+            </div>
+            {savings > 0 && (
+              <p className="text-[10px] font-bold text-green-600">🎉 Save ₹{savings}</p>
+            )}
+          </div>
+
+          {/* Cart action */}
+          {cartItem ? (
+            <div className="flex items-center bg-primary-50 border border-primary-200 rounded-xl overflow-hidden h-11">
+              <button
+                onClick={() => updateQuantity(cartItem.id, cartItem.qty - 1)}
+                className="w-11 h-full flex items-center justify-center text-primary-600 hover:bg-primary-100 text-xl font-bold transition-colors"
+              >
+                −
+              </button>
+              <span className="w-10 text-center font-black text-gray-800 text-sm">{cartItem.qty}</span>
+              <button
+                onClick={() => updateQuantity(cartItem.id, cartItem.qty + 1)}
+                disabled={cartItem.qty >= product.stock}
+                className="w-11 h-full flex items-center justify-center text-primary-600 hover:bg-primary-100 text-xl font-bold transition-colors disabled:opacity-40"
+              >
+                +
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => addToCart(product)}
+              disabled={product.stock <= 0}
+              className="bg-primary-500 hover:bg-primary-600 active:scale-95 disabled:bg-gray-300 text-white font-black px-6 py-3 rounded-xl transition-all text-sm shadow-md shadow-orange-200 whitespace-nowrap"
+            >
+              {product.stock > 0 ? `🛒 Add to Cart` : 'Out of Stock'}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
