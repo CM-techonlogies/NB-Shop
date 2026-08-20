@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { HelmetProvider } from 'react-helmet-async';
 import TokenSyncer from './components/auth/TokenSyncer';
+import ScrollToTop from './components/ScrollToTop';
 
 const AppRoutes = React.lazy(() => import('./routes/index'));
 
@@ -23,6 +24,7 @@ export default function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
+          <ScrollToTop />
           <TokenSyncer />
           <Suspense fallback={
             <div className="flex h-screen items-center justify-center">
