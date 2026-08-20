@@ -6,6 +6,7 @@ import ProtectedRoute from './ProtectedRoute';
 import AdminRoute from './AdminRoute';
 import Spinner from '../components/ui/Spinner';
 import ErrorBoundary from '../components/ErrorBoundary';
+import NotFoundPage from '../pages/NotFoundPage';
 
 // ─── Retry-aware lazy loader ──────────────────────────────────────────────────
 // Wraps React.lazy so that if a chunk import fails (stale SW cache / network blip),
@@ -100,6 +101,8 @@ export default function AppRoutes() {
             <Route path="offers" element={<OffersAdminPage />} />
             <Route path="settings" element={<SettingsAdminPage />} />
           </Route>
+          {/* 404 catch-all */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Suspense>
     </ErrorBoundary>

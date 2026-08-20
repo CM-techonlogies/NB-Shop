@@ -9,27 +9,113 @@
 
     <!-- Primary Meta Tags -->
     <title>NB Shop - Your Nearby Grocery Store</title>
-    <meta name="description" content="M/s NAVARAM BHUBAJI - &quot;सभी प्रकार की किराना &amp; प्रोविजनल आइटम्स उपलब्ध...&quot;" />
+    <meta name="description" content='M/s NAVARAM BHUBAJI - "सभी प्रकार की किराना & प्रोविजनल आइटम्स उपलब्ध..."' />
 
     <!-- Open Graph / WhatsApp / Telegram / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="NB Shop" />
     <meta property="og:title" content="NB Shop - Your Nearby Grocery Store" />
-    <meta property="og:description" content="M/s NAVARAM BHUBAJI - &quot;सभी प्रकार की किराना &amp; प्रोविजनल आइटम्स उपलब्ध...&quot;" />
+    <meta property="og:description" content='M/s NAVARAM BHUBAJI - "सभी प्रकार की किराना & प्रोविजनल आइटम्स उपलब्ध..."' />
     <meta property="og:image" content="/pwa-512x512.png" />
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="NB Shop - Your Nearby Grocery Store" />
-    <meta name="twitter:description" content="M/s NAVARAM BHUBAJI - &quot;सभी प्रकार की किराना &amp; प्रोविजनल आइटम्स उपलब्ध...&quot;" />
+    <meta name="twitter:description" content='M/s NAVARAM BHUBAJI - "सभी प्रकार की किराना & प्रोविजनल आइटम्स उपलब्ध..."' />
     <meta name="twitter:image" content="/pwa-512x512.png" />
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Preconnect to external hosts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://clerk.com" crossorigin />
+    <link rel="preconnect" href="https://img.clerk.com" crossorigin />
+
+    <!-- Google Fonts — non-blocking (media trick) -->
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap"
+    />
+    <link
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap"
+    />
+    <noscript>
+      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" />
+    </noscript>
+
+    <!-- Inline critical CSS + splash screen — shown before ANY JS loads -->
+    <style>
+      *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+      html,body{height:100%;background:#FFF8F0;font-family:system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+      #root{min-height:100%}
+
+      /* Splash screen */
+      #nb-splash{
+        position:fixed;inset:0;display:flex;flex-direction:column;
+        align-items:center;justify-content:center;
+        background:linear-gradient(135deg,#FFF8F0 0%,#FFF3E6 100%);
+        z-index:9999;transition:opacity .4s ease,transform .4s ease;
+      }
+      #nb-splash.fade-out{opacity:0;transform:scale(1.04);pointer-events:none}
+      .nb-logo-wrap{
+        width:88px;height:88px;border-radius:24px;
+        background:linear-gradient(135deg,#FF6B00,#FF9A00);
+        display:flex;align-items:center;justify-content:center;
+        box-shadow:0 8px 32px rgba(255,107,0,.35);
+        margin-bottom:20px;animation:nb-pulse 2s ease-in-out infinite;
+      }
+      .nb-logo-inner{
+        width:56px;height:56px;border-radius:14px;
+        background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;
+        font-size:28px;
+      }
+      .nb-brand{font-size:26px;font-weight:900;color:#1a1a1a;letter-spacing:-.5px;margin-bottom:4px}
+      .nb-brand span{color:#FF6B00}
+      .nb-tagline{font-size:13px;color:#888;margin-bottom:32px}
+      .nb-bar{width:160px;height:4px;background:#f0e6d8;border-radius:99px;overflow:hidden}
+      .nb-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#FF6B00,#FF9A00);animation:nb-load 2.2s ease-in-out infinite}
+      @keyframes nb-pulse{0%,100%{box-shadow:0 8px 32px rgba(255,107,0,.35)}50%{box-shadow:0 12px 44px rgba(255,107,0,.55)}}
+      @keyframes nb-load{0%{width:0%;margin-left:0}60%{width:80%;margin-left:0}80%{width:95%;margin-left:0}100%{width:100%;margin-left:0}}
+    </style>
   </head>
-  <body class="bg-[#FFF8F0] text-gray-800 font-body antialiased">
+  <body>
+    <!-- Splash — visible immediately, removed by JS once app mounts -->
+    <div id="nb-splash">
+      <div class="nb-logo-wrap">
+        <div class="nb-logo-inner">🛒</div>
+      </div>
+      <div class="nb-brand">NB <span>SHOP</span></div>
+      <div class="nb-tagline">Your Nearby Grocery Store</div>
+      <div class="nb-bar"><div class="nb-bar-fill"></div></div>
+    </div>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Remove splash once app root renders -->
+    <script>
+      (function() {
+        var observer = new MutationObserver(function() {
+          var root = document.getElementById('root');
+          if (root && root.children.length > 0) {
+            var splash = document.getElementById('nb-splash');
+            if (splash) {
+              splash.classList.add('fade-out');
+              setTimeout(function(){ splash.remove(); }, 450);
+            }
+            observer.disconnect();
+          }
+        });
+        observer.observe(document.getElementById('root'), { childList: true, subtree: true });
+        // Safety fallback — remove splash after 8s no matter what
+        setTimeout(function(){
+          var splash = document.getElementById('nb-splash');
+          if (splash) { splash.classList.add('fade-out'); setTimeout(function(){ splash.remove(); }, 450); }
+        }, 8000);
+      })();
+    </script>
   </body>
 </html>
