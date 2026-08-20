@@ -46,56 +46,165 @@
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" />
     </noscript>
 
-    <!-- Inline critical CSS + splash screen — shown before ANY JS loads -->
+    <!-- Inline critical CSS + Netflix-style Splash Screen -->
     <style>
       *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-      html,body{height:100%;background:#FFF8F0;font-family:system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+      html,body{height:100%;background:#0D0D0D;font-family:'Poppins',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
       #root{min-height:100%}
 
-      /* Splash screen */
-      #nb-splash{
-        position:fixed;inset:0;display:flex;flex-direction:column;
-        align-items:center;justify-content:center;
-        background:linear-gradient(135deg,#FFF8F0 0%,#FFF3E6 100%);
-        z-index:9999;transition:opacity .4s ease,transform .4s ease;
+      /* Netflix-style Splash Overlay */
+      #nb-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at center, #261200 0%, #0A0500 70%, #000000 100%);
+        z-index: 9999;
+        overflow: hidden;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      #nb-splash.fade-out{opacity:0;transform:scale(1.04);pointer-events:none}
-      .nb-logo-wrap{
-        width:88px;height:88px;border-radius:24px;
-        background:linear-gradient(135deg,#FF6B00,#FF9A00);
-        display:flex;align-items:center;justify-content:center;
-        box-shadow:0 8px 32px rgba(255,107,0,.35);
-        margin-bottom:20px;animation:nb-pulse 2s ease-in-out infinite;
+
+      /* Exit Animation (Zoom Out Reveal like Netflix) */
+      #nb-splash.fade-out {
+        opacity: 0;
+        transform: scale(1.15);
+        pointer-events: none;
       }
-      .nb-logo-inner{
-        width:56px;height:56px;border-radius:14px;
-        background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;
-        font-size:28px;
+
+      /* Subtle background ambient pulse */
+      .nb-bg-glow {
+        position: absolute;
+        width: 350px;
+        height: 350px;
+        background: radial-gradient(circle, rgba(255,107,0,0.35) 0%, rgba(255,107,0,0) 70%);
+        border-radius: 50%;
+        animation: bg-pulse 2.5s ease-in-out infinite alternate;
+        pointer-events: none;
       }
-      .nb-brand{font-size:26px;font-weight:900;color:#1a1a1a;letter-spacing:-.5px;margin-bottom:4px}
-      .nb-brand span{color:#FF6B00}
-      .nb-tagline{font-size:13px;color:#888;margin-bottom:32px}
-      .nb-bar{width:160px;height:4px;background:#f0e6d8;border-radius:99px;overflow:hidden}
-      .nb-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#FF6B00,#FF9A00);animation:nb-load 2.2s ease-in-out infinite}
-      @keyframes nb-pulse{0%,100%{box-shadow:0 8px 32px rgba(255,107,0,.35)}50%{box-shadow:0 12px 44px rgba(255,107,0,.55)}}
-      @keyframes nb-load{0%{width:0%;margin-left:0}60%{width:80%;margin-left:0}80%{width:95%;margin-left:0}100%{width:100%;margin-left:0}}
+
+      /* Logo container with Netflix pop & glow */
+      .nb-logo-container {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        animation: netflix-pop 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+      }
+
+      .nb-logo-img {
+        width: 110px;
+        height: 110px;
+        border-radius: 28px;
+        object-fit: cover;
+        box-shadow: 0 16px 48px rgba(255, 107, 0, 0.5), 0 0 20px rgba(255, 154, 0, 0.3);
+        animation: logo-glow 2s ease-in-out infinite alternate;
+      }
+
+      /* Typography with tracking expansion */
+      .nb-title {
+        font-size: 32px;
+        font-weight: 900;
+        color: #ffffff;
+        letter-spacing: 2px;
+        margin-top: 20px;
+        text-transform: uppercase;
+        animation: text-expand 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+      }
+
+      .nb-title span {
+        color: #FF6B00;
+        text-shadow: 0 0 15px rgba(255, 107, 0, 0.6);
+      }
+
+      .nb-sub {
+        font-size: 13px;
+        font-weight: 600;
+        color: #A0A0A0;
+        letter-spacing: 1px;
+        margin-top: 6px;
+        opacity: 0;
+        animation: fade-up 0.8s ease forwards 0.4s;
+      }
+
+      /* Netflix-style cinematic progress bar */
+      .nb-loader-bar {
+        position: absolute;
+        bottom: 50px;
+        width: 140px;
+        height: 3px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+
+      .nb-loader-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #FF6B00, #FFA800, #FF6B00);
+        background-size: 200% 100%;
+        border-radius: 99px;
+        animation: load-fill 2s cubic-bezier(0.4, 0, 0.2, 1) infinite, shimmer 1.5s linear infinite;
+      }
+
+      /* Animations */
+      @keyframes netflix-pop {
+        0% { transform: scale(0.4); opacity: 0; filter: blur(10px); }
+        100% { transform: scale(1); opacity: 1; filter: blur(0px); }
+      }
+
+      @keyframes text-expand {
+        0% { letter-spacing: -2px; opacity: 0; }
+        100% { letter-spacing: 3px; opacity: 1; }
+      }
+
+      @keyframes fade-up {
+        0% { transform: translateY(10px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+      }
+
+      @keyframes logo-glow {
+        0% { box-shadow: 0 12px 36px rgba(255, 107, 0, 0.4); transform: scale(1); }
+        100% { box-shadow: 0 20px 60px rgba(255, 107, 0, 0.75), 0 0 30px rgba(255, 154, 0, 0.5); transform: scale(1.03); }
+      }
+
+      @keyframes bg-pulse {
+        0% { transform: scale(0.9); opacity: 0.5; }
+        100% { transform: scale(1.3); opacity: 0.9; }
+      }
+
+      @keyframes load-fill {
+        0% { width: 0%; }
+        50% { width: 70%; }
+        100% { width: 100%; }
+      }
+
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
     </style>
   </head>
   <body>
-    <!-- Splash — visible immediately, removed by JS once app mounts -->
+    <!-- Netflix-style Splash Screen -->
     <div id="nb-splash">
-      <div class="nb-logo-wrap">
-        <div class="nb-logo-inner">🛒</div>
+      <div class="nb-bg-glow"></div>
+      <div class="nb-logo-container">
+        <img src="/logo.jpg" alt="NB Shop Logo" class="nb-logo-img" />
+        <div class="nb-title">NB <span>SHOP</span></div>
+        <div class="nb-sub">Your Nearby Grocery Store</div>
       </div>
-      <div class="nb-brand">NB <span>SHOP</span></div>
-      <div class="nb-tagline">Your Nearby Grocery Store</div>
-      <div class="nb-bar"><div class="nb-bar-fill"></div></div>
+      <div class="nb-loader-bar">
+        <div class="nb-loader-fill"></div>
+      </div>
     </div>
 
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Remove splash once app root renders -->
+    <!-- Fade out & remove splash screen once React mounts -->
     <script>
       (function() {
         var observer = new MutationObserver(function() {
@@ -104,17 +213,17 @@
             var splash = document.getElementById('nb-splash');
             if (splash) {
               splash.classList.add('fade-out');
-              setTimeout(function(){ splash.remove(); }, 450);
+              setTimeout(function(){ splash.remove(); }, 600);
             }
             observer.disconnect();
           }
         });
         observer.observe(document.getElementById('root'), { childList: true, subtree: true });
-        // Safety fallback — remove splash after 8s no matter what
+        // Safety fallback — remove splash after 6s max
         setTimeout(function(){
           var splash = document.getElementById('nb-splash');
-          if (splash) { splash.classList.add('fade-out'); setTimeout(function(){ splash.remove(); }, 450); }
-        }, 8000);
+          if (splash) { splash.classList.add('fade-out'); setTimeout(function(){ splash.remove(); }, 600); }
+        }, 6000);
       })();
     </script>
   </body>
