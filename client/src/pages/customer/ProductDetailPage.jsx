@@ -119,7 +119,7 @@ export default function ProductDetailPage() {
                 <img
                   src={rawImages[activeImage]?.url || PLACEHOLDER}
                   alt={product.name}
-                  className="w-full h-52 sm:h-64 md:h-80 object-contain p-4 md:p-8"
+                  className="w-full h-44 sm:h-56 md:h-72 object-contain p-3 md:p-6"
                   onError={e => { e.target.src = PLACEHOLDER; }}
                 />
               </div>
@@ -167,7 +167,7 @@ export default function ProductDetailPage() {
               )}
 
               {/* Product Name */}
-              <h1 className="text-xl md:text-2xl font-black font-heading text-gray-900 mb-3 leading-snug">
+              <h1 className="text-lg md:text-xl font-black font-heading text-gray-900 mb-2.5 leading-snug">
                 {product.name}
               </h1>
 
@@ -196,9 +196,9 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Price Block */}
-              <div className="bg-orange-50 rounded-2xl p-3 mb-4 border border-orange-100">
+              <div className="bg-orange-50 rounded-xl p-2.5 mb-3 border border-orange-100">
                 <div className="flex items-end gap-2 mb-1">
-                  <span className="text-3xl font-black text-gray-900">₹{product.price}</span>
+                  <span className="text-2xl font-black text-gray-900">₹{product.price}</span>
                   {product.mrp > product.price && (
                     <span className="text-base text-gray-400 line-through mb-0.5">₹{product.mrp}</span>
                   )}
@@ -269,13 +269,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {/* SKU / Barcode meta */}
-              {(product.sku || product.barcode) && (
-                <div className="mt-3 flex gap-3 text-[11px] text-gray-400">
-                  {product.sku && <span>SKU: {product.sku}</span>}
-                  {product.barcode && <span>Barcode: {product.barcode}</span>}
-                </div>
-              )}
+
             </div>
           </div>
         </div>
