@@ -286,34 +286,28 @@ export default function ProductCard({ product }) {
         to={`/product/${productId}`}
         className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden p-3 md:p-4"
       >
-        {/* Top Bar: LOOSE badge (left) & % OFF or label badge (right) */}
-        <div className="flex items-start justify-between gap-1 z-10 mb-2 min-w-0">
-          <div className="flex-shrink-0">
-            {isLoose && (
-              <span className="inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-200 whitespace-nowrap">
-                ⚖️ {t('loose')}
-              </span>
-            )}
-          </div>
-          <div className="flex-shrink-0">
-            {discount > 0 ? (
-              <span className="inline-block bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide whitespace-nowrap">
-                {discount}% OFF
-              </span>
-            ) : product.trending ? (
-              <span className="inline-block bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide whitespace-nowrap">
-                HOT
-              </span>
-            ) : product.featured ? (
-              <span className="inline-block bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide whitespace-nowrap">
-                TOP
-              </span>
-            ) : null}
-          </div>
-        </div>
-
         {/* Product Image — uniform 1:1 aspect ratio across all products & devices */}
-        <div className="relative aspect-square w-full overflow-hidden bg-gray-50/50 rounded-xl p-2 flex items-center justify-center mb-3">
+        <div className="relative aspect-square w-full overflow-hidden bg-gray-50/50 rounded-xl p-2.5 flex items-center justify-center mb-3">
+          {/* Absolute badges overlay — keeps top edge identical across all cards */}
+          {isLoose && (
+            <span className="absolute top-2 left-2 z-10 inline-flex items-center gap-0.5 bg-amber-100 text-amber-700 text-[9px] font-bold px-1.5 py-0.5 rounded-md border border-amber-200 shadow-2xs">
+              ⚖️ {t('loose')}
+            </span>
+          )}
+          {discount > 0 ? (
+            <span className="absolute top-2 right-2 z-10 inline-block bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide shadow-2xs">
+              {discount}% OFF
+            </span>
+          ) : product.trending ? (
+            <span className="absolute top-2 right-2 z-10 inline-block bg-orange-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide shadow-2xs">
+              HOT
+            </span>
+          ) : product.featured ? (
+            <span className="absolute top-2 right-2 z-10 inline-block bg-purple-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wide shadow-2xs">
+              TOP
+            </span>
+          ) : null}
+
           <LazyImage
             src={rawImageUrl}
             alt={product.name}
@@ -332,8 +326,8 @@ export default function ProductCard({ product }) {
 
         {/* Product Details */}
         <div className="flex flex-col flex-1">
-          {/* Title */}
-          <h3 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1.5 group-hover:text-primary-600 transition-colors leading-tight">
+          {/* Title with min-height for uniform alignment */}
+          <h3 className="text-sm font-bold text-gray-900 line-clamp-2 min-h-[2.25rem] mb-1.5 group-hover:text-primary-600 transition-colors leading-tight">
             {product.name}
           </h3>
 
