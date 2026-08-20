@@ -312,14 +312,14 @@ export default function ProductCard({ product }) {
           </div>
         </div>
 
-        {/* Product Image */}
-        <div className="relative aspect-square overflow-hidden bg-gray-50/50 rounded-xl p-3 flex items-center justify-center mb-3">
+        {/* Product Image — uniform 1:1 aspect ratio across all products & devices */}
+        <div className="relative aspect-square w-full overflow-hidden bg-gray-50/50 rounded-xl p-2 flex items-center justify-center mb-3">
           <LazyImage
             src={rawImageUrl}
             alt={product.name}
-            className="object-contain w-full h-full group-hover:scale-105 transition-transform duration-300"
-            wrapperClassName="w-full h-full"
-            fallback={<span className="text-5xl text-gray-300">🛒</span>}
+            className="object-contain w-full h-full max-h-full max-w-full group-hover:scale-105 transition-transform duration-300"
+            wrapperClassName="w-full h-full flex items-center justify-center"
+            fallback={<span className="text-4xl text-gray-300">🛒</span>}
           />
           {isOutOfStock && (
             <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] flex items-center justify-center z-10">

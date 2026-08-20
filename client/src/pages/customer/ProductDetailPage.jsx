@@ -104,22 +104,22 @@ export default function ProductDetailPage() {
 
             {/* ── IMAGE SECTION ──────────────────────────────────────────── */}
             <div className="md:w-[42%] flex-shrink-0 bg-white md:bg-gray-50 md:border-r md:border-gray-100">
-              {/* Main image — compact on mobile */}
-              <div className="relative bg-white">
+              {/* Main image — constant 1:1 square ratio across all devices & browsers */}
+              <div className="relative bg-white aspect-square w-full max-w-[260px] sm:max-w-[300px] md:max-w-[320px] mx-auto flex items-center justify-center p-3">
                 {discount > 0 && (
-                  <div className="absolute top-3 left-3 z-10 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow">
+                  <div className="absolute top-2 left-2 z-10 bg-gradient-to-r from-red-500 to-orange-500 text-white text-xs font-black px-2.5 py-1 rounded-full shadow">
                     {discount}% OFF
                   </div>
                 )}
                 {product.is_loose && (
-                  <div className="absolute top-3 right-3 z-10 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                  <div className="absolute top-2 right-2 z-10 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
                     ⚖️ Loose
                   </div>
                 )}
                 <img
                   src={rawImages[activeImage]?.url || PLACEHOLDER}
                   alt={product.name}
-                  className="w-full h-52 sm:h-64 md:h-72 object-contain p-4 md:p-6"
+                  className="w-full h-full object-contain max-h-full max-w-full p-2"
                   onError={e => { e.target.src = PLACEHOLDER; }}
                 />
               </div>
