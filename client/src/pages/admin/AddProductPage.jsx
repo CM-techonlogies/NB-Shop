@@ -7,6 +7,7 @@ import toast from 'react-hot-toast';
 import { STORE_NAME } from '../../constants';
 import { useCategories } from '../../hooks/useProducts';
 import { productService } from '../../services/product.service';
+import ImgBBUploader from '../../components/admin/ImgBBUploader';
 
 export default function AddProductPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -173,46 +174,16 @@ export default function AddProductPage() {
         </div>
 
 
-        {/* Product Images — paste URL from Google or any source */}
+        {/* Product Images — Upload from phone or paste URL */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4 border-b pb-2">
+          <div className="flex items-center gap-2 mb-1 border-b pb-2">
             <h2 className="text-lg font-bold text-gray-900">Product Images</h2>
-            {imageUrls.length < 5 && (
-              <button type="button" onClick={addImageUrl}
-                className="text-sm text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
-                + Add Image URL
-              </button>
-            )}
+            <span className="text-xs bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">ImgBB CDN</span>
           </div>
-          <p className="text-xs text-gray-500 mb-4">
-            🔗 Paste image URLs from Google Images, Amazon, or any website.
+          <p className="text-xs text-gray-400 mb-4">
+            📷 Click the button below to take a photo or pick from gallery — image uploads automatically!
           </p>
-          <div className="space-y-3">
-            {imageUrls.map((url, i) => (
-              <div key={i} className="flex gap-3 items-start">
-                <div className="flex-1">
-                  <input
-                    type="url"
-                    value={url}
-                    onChange={(e) => updateImageUrl(i, e.target.value)}
-                    className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                    placeholder="https://example.com/product-image.jpg"
-                  />
-                </div>
-                {url.trim() && (
-                  <img src={url} alt="preview"
-                    className="w-14 h-14 object-cover rounded-lg border border-gray-200 flex-shrink-0"
-                    onError={(e) => { e.target.style.display = 'none'; }}
-                    onLoad={(e) => { e.target.style.display = 'block'; }}
-                  />
-                )}
-                {imageUrls.length > 1 && (
-                  <button type="button" onClick={() => removeImageUrl(i)}
-                    className="text-red-400 hover:text-red-600 text-sm font-bold flex-shrink-0 mt-2">✕</button>
-                )}
-              </div>
-            ))}
-          </div>
+          <ImgBBUploader imageUrls={imageUrls} setImageUrls={setImageUrls} maxImages={5} />
         </div>
 
         {/* Status flags */}
