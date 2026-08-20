@@ -54,8 +54,8 @@ const OffersAdminPage       = lazyWithRetry(() => import('../pages/admin/OffersA
 const SettingsAdminPage     = lazyWithRetry(() => import('../pages/admin/SettingsAdminPage'));
 
 const Loading = () => (
-  <div className="flex h-[60vh] items-center justify-center">
-    <Spinner size="lg" />
+  <div className="flex flex-col items-center justify-center min-h-[30vh] py-12">
+    <Spinner size="md" />
   </div>
 );
 

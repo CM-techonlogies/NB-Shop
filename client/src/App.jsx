@@ -27,8 +27,8 @@ export default function App() {
           <ScrollToTop />
           <TokenSyncer />
           <Suspense fallback={
-            <div className="flex h-screen items-center justify-center">
-              <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="flex items-center justify-center min-h-[40vh] py-12">
+              <div className="w-7 h-7 border-3 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           }>
             <AppRoutes />

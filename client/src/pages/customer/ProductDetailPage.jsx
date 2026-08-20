@@ -35,8 +35,9 @@ export default function ProductDetailPage() {
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="flex h-[60vh] items-center justify-center">
-        <Spinner size="xl" />
+      <div className="flex flex-col items-center justify-center min-h-[35vh] py-12">
+        <Spinner size="md" />
+        <span className="text-xs font-semibold text-gray-400 mt-2">Loading product...</span>
       </div>
     );
   }
