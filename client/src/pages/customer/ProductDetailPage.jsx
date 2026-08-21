@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useProductById, useProducts } from '../../hooks/useProducts';
@@ -33,6 +33,10 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
   // Loose item selected quantity (default: min_quantity or 0.25)
   const [looseQty, setLooseQty] = useState(null);
+  // Custom input mode — user types own quantity
+  const [customInputMode, setCustomInputMode] = useState(false);
+  const [customInputVal, setCustomInputVal] = useState('');
+  const customInputRef = useRef(null);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -293,14 +297,72 @@ export default function ProductDetailPage() {
                         >
                           −
                         </button>
-                        <div className="flex-1 text-center">
-                          <span className="text-2xl font-black text-gray-900">
-                            {formatQty(effectiveLooseQty, product.unit)}
-                          </span>
-                          <p className="text-[10px] text-gray-400 mt-0.5">
-                            step: {formatQty(looseStep, product.unit)}
-                          </p>
-                        </div>
+
+                        {/* Center: tappable qty display OR custom input */}
+                        {customInputMode ? (
+                          <div className="flex-1 flex flex-col items-center gap-1">
+                            <div className="flex items-center gap-1 bg-white border-2 border-amber-400 rounded-xl px-3 py-1.5 w-full">
+                              <input
+                                ref={customInputRef}
+                                type="number"
+                                step={looseStep}
+                                min={looseStep}
+                                value={customInputVal}
+                                onChange={e => setCustomInputVal(e.target.value)}
+                                onKeyDown={e => {
+                                  if (e.key === 'Enter') {
+                                    const parsed = parseFloat(customInputVal);
+                                    if (!isNaN(parsed) && parsed >= looseStep) {
+                                      setLooseQty(parseFloat(parsed.toFixed(3)));
+                                    }
+                                    setCustomInputMode(false);
+                                  }
+                                  if (e.key === 'Escape') setCustomInputMode(false);
+                                }}
+                                className="flex-1 text-center text-lg font-black text-gray-900 outline-none bg-transparent w-full"
+                                placeholder={`e.g. 0.75`}
+                                autoFocus
+                              />
+                              <span className="text-sm font-bold text-amber-600 flex-shrink-0">{product.unit || 'kg'}</span>
+                            </div>
+                            <div className="flex gap-1.5 w-full">
+                              <button
+                                onClick={() => {
+                                  const parsed = parseFloat(customInputVal);
+                                  if (!isNaN(parsed) && parsed >= looseStep) {
+                                    setLooseQty(parseFloat(parsed.toFixed(3)));
+                                  }
+                                  setCustomInputMode(false);
+                                }}
+                                className="flex-1 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg"
+                              >
+                                ✓ Set
+                              </button>
+                              <button
+                                onClick={() => setCustomInputMode(false)}
+                                className="flex-1 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setCustomInputVal(effectiveLooseQty.toString());
+                              setCustomInputMode(true);
+                              setTimeout(() => customInputRef.current?.focus(), 50);
+                            }}
+                            className="flex-1 text-center group"
+                            title="Tap to enter custom quantity"
+                          >
+                            <span className="text-2xl font-black text-gray-900 group-hover:text-amber-600 transition-colors">
+                              {formatQty(effectiveLooseQty, product.unit)}
+                            </span>
+                            <p className="text-[10px] text-amber-500 mt-0.5 font-semibold">✏️ tap to customize</p>
+                          </button>
+                        )}
+
                         <button
                           onClick={() => setLooseQty(parseFloat((effectiveLooseQty + looseStep).toFixed(3)))}
                           className="w-12 h-12 flex items-center justify-center bg-white border border-amber-300 rounded-xl text-2xl font-bold text-amber-700 hover:bg-amber-100 active:scale-95 transition-all shadow-sm"
