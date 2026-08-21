@@ -46,10 +46,10 @@ export default function DashboardPage() {
 
       const dayName = days[d.getDay()];
 
-      // Sum totals of orders created during this day
+      // Sum totals of orders created during this day (excluding cancelled)
       const dayTotal = weeklyOrders
         .filter(o => {
-          if (!o.created_at) return false;
+          if (!o.created_at || o.status === 'cancelled') return false;
           try {
             const oDate = new Date(o.created_at);
             return oDate >= d && oDate < nextD;
@@ -62,16 +62,6 @@ export default function DashboardPage() {
       result.push({
         name: dayName,
         revenue: Math.round(dayTotal),
-      });
-    }
-
-    // Fallback distribution if all 7 days are zero but orders exist
-    const hasData = result.some(r => r.revenue > 0);
-    if (!hasData && weeklyOrders.length > 0) {
-      weeklyOrders.slice(0, 7).forEach((o, idx) => {
-        if (result[idx]) {
-          result[idx].revenue = Math.round(parseFloat(o.total || 0));
-        }
       });
     }
 

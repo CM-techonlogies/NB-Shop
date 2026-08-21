@@ -6,15 +6,23 @@ const whatsapp = require('../services/whatsapp.service');
 
 exports.getDashboardStats = asyncHandler(async (req, res) => {
   const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
-  const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  
+  // Calculate Start of Today in Indian Standard Time (IST = UTC + 5:30)
+  const istNow = new Date(now.getTime() + 5.5 * 3600 * 1000);
+  const istYear = istNow.getUTCFullYear();
+  const istMonth = istNow.getUTCMonth();
+  const istDate = istNow.getUTCDate();
+  
+  // Start of today in UTC (IST 00:00:00)
+  const startOfTodayUTC = new Date(Date.UTC(istYear, istMonth, istDate) - 5.5 * 3600 * 1000);
+  const weekAgoUTC = new Date(startOfTodayUTC.getTime() - 6 * 24 * 3600 * 1000);
 
   // 1. Fetch all orders (safely order by created_at desc)
   let allOrders = [];
   try {
     const { data, error } = await supabase
       .from('orders')
-      .select('id, invoice_id, total, status, created_at')
+      .select('id, invoice_id, total, status, created_at, updated_at')
       .order('created_at', { ascending: false });
     
     if (!error && data) {
@@ -75,25 +83,45 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     console.error('Dashboard: error fetching low stock products:', e);
   }
 
-  // Filter orders for today
-  const todayOrdersList = allOrders.filter(o => o.created_at && o.created_at >= startOfToday);
-  const activeTodayOrders = todayOrdersList.length > 0 ? todayOrdersList : allOrders;
+  // Exact filtering (NO FALLBACK to allOrders)
+  const todayOrdersList = allOrders.filter(o => {
+    if (!o.created_at) return false;
+    return new Date(o.created_at) >= startOfTodayUTC;
+  });
 
-  // Active sales = non-cancelled orders
-  const todaySales = activeTodayOrders
+  // Today's Sales = Non-cancelled orders created today
+  const todaySales = todayOrdersList
     .filter(o => o.status !== 'cancelled')
     .reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
 
-  const todayOrders = activeTodayOrders.length;
-  const pendingOrders = allOrders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length;
-  const deliveredOrders = allOrders.filter(o => o.status === 'delivered').length;
-  const cancelledOrders = allOrders.filter(o => o.status === 'cancelled').length;
+  const todayOrders = todayOrdersList.length;
 
+  // Pending orders = All active orders not delivered & not cancelled
+  const pendingOrders = allOrders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length;
+
+  // Delivered today = Delivered orders updated/created today
+  const deliveredOrders = allOrders.filter(o => {
+    if (o.status !== 'delivered') return false;
+    const checkDate = o.updated_at || o.created_at;
+    return checkDate && new Date(checkDate) >= startOfTodayUTC;
+  }).length;
+
+  const cancelledOrders = allOrders.filter(o => {
+    if (o.status !== 'cancelled') return false;
+    const checkDate = o.updated_at || o.created_at;
+    return checkDate && new Date(checkDate) >= startOfTodayUTC;
+  }).length;
+
+  // Total All-Time Revenue (non-cancelled)
   const totalRevenue = allOrders
     .filter(o => o.status !== 'cancelled')
     .reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
 
-  const weeklyOrders = allOrders.filter(o => o.created_at && o.created_at >= weekAgo);
+  // Weekly Orders for last 7 days chart
+  const weeklyOrders = allOrders.filter(o => {
+    if (!o.created_at) return false;
+    return new Date(o.created_at) >= weekAgoUTC;
+  });
 
   res.json(new ApiResponse(200, {
     todaySales,
@@ -105,7 +133,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     totalProducts,
     totalCustomers,
     lowStockProducts,
-    weeklyOrders: weeklyOrders.length > 0 ? weeklyOrders : allOrders,
+    weeklyOrders,
   }, 'Dashboard stats'));
 });
 
