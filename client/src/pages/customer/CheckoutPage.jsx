@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
@@ -41,10 +41,11 @@ export default function CheckoutPage() {
     }
   });
 
-  if (cart.length === 0) {
-    navigate('/cart');
-    return null;
-  }
+  // C1 FIX: navigate() must be in useEffect, not during render
+  useEffect(() => {
+    if (cart.length === 0) navigate('/cart');
+  }, [cart.length, navigate]);
+  if (cart.length === 0) return null;
 
   // Geolocation detection handler
   const handleDetectLocation = () => {
@@ -70,9 +71,24 @@ export default function CheckoutPage() {
     );
   };
 
+  // M1 FIX: guard clipboard API — not available on HTTP or older browsers
   const handleCopyUpi = () => {
-    navigator.clipboard.writeText(storeUpiId);
-    toast.success('UPI ID copied to clipboard! 📋');
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(storeUpiId);
+      } else {
+        // Fallback for HTTP/older browsers
+        const el = document.createElement('textarea');
+        el.value = storeUpiId;
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+      }
+      toast.success('UPI ID copied to clipboard! 📋');
+    } catch {
+      toast.error('Could not copy. Please copy manually: ' + storeUpiId);
+    }
   };
 
   const onSubmit = async (data) => {
@@ -112,7 +128,8 @@ export default function CheckoutPage() {
         items: cart.map(item => {
           // For loose items: send customQty (e.g. 1.5 kg) as quantity
           // For fixed items: send normal qty (e.g. 2 bags)
-          const effectiveQty = item.customQty !== undefined ? item.customQty : (item.qty || 1);
+          // mn3 FIX: also check customQty > 0 to avoid sending qty=0
+          const effectiveQty = (item.customQty !== undefined && item.customQty > 0) ? item.customQty : (item.qty || 1);
           return {
             product: item.id,
             quantity: effectiveQty,
@@ -128,16 +145,12 @@ export default function CheckoutPage() {
       const order = result?.data;
       const orderId = order?.id || order?._id;
 
+      // C2 FIX: guard against undefined orderId before navigating
       clearCart();
       toast.success('Order placed successfully! 🎉');
-
-      // Open WhatsApp with pre-filled order message + GPS navigation link for owner
       sendOrderToOwnerWhatsApp(order, cart, shippingAddress);
-
-      // Delay SPA navigation slightly so iOS Safari registers the WhatsApp deep link redirect
-      setTimeout(() => {
-        navigate(`/order/${orderId}`);
-      }, 500);
+      const targetPath = orderId ? `/order/${orderId}` : '/orders';
+      setTimeout(() => navigate(targetPath), 500);
     } catch (error) {
       const msg =
         error?.response?.data?.message ||

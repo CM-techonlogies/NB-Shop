@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import Spinner from '../../components/ui/Spinner';
 
 export default function OrdersPage() {
-  const { data: ordersData, isLoading } = useMyOrders();
+  const { data: ordersData, isLoading, isError } = useMyOrders();
   const [activeTab, setActiveTab] = useState('current'); // 'current' or 'history'
 
   const orders = Array.isArray(ordersData)
@@ -47,7 +47,7 @@ export default function OrdersPage() {
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            🚚 Current Orders ({currentOrders.length})
+            🚚 Current Orders {!isLoading && `(${currentOrders.length})`}
           </button>
 
           <button
@@ -58,7 +58,7 @@ export default function OrdersPage() {
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
             }`}
           >
-            📜 Order History ({pastOrders.length})
+            📜 Order History {!isLoading && `(${pastOrders.length})`}
           </button>
         </div>
       </div>
@@ -75,6 +75,19 @@ export default function OrdersPage() {
               <div className="w-1/4 h-8 bg-gray-200 dark:bg-gray-700 rounded ml-auto"></div>
             </div>
           ))}
+        </div>
+      ) : isError ? (
+        /* M7 FIX: show error state instead of empty state on API failure */
+        <div className="bg-white dark:bg-gray-800 p-12 rounded-3xl shadow-sm border border-red-100 text-center">
+          <div className="text-5xl mb-4">⚠️</div>
+          <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-2">Failed to load orders</h2>
+          <p className="text-gray-500 text-sm mb-6">There was a problem fetching your orders. Please check your connection and try again.</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-primary-500 hover:bg-primary-600 text-white font-bold py-2.5 px-6 rounded-xl transition-colors text-sm"
+          >
+            Retry
+          </button>
         </div>
       ) : displayedOrders.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 p-12 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700 text-center">

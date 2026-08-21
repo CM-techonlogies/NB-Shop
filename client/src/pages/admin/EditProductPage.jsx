@@ -36,16 +36,20 @@ export default function EditProductPage() {
       reset({
         name: productData.name || '',
         description: productData.description || '',
-        category_id: productData.category_id || productData.categories?.id || '',
+        // m3 FIX: also try productData.category?.id for different API shapes
+        category_id: productData.category_id || productData.category?.id || productData.categories?.id || '',
         brand: productData.brand || '',
         mrp: productData.mrp || 0,
         price: productData.price || 0,
         stock: productData.stock || 0,
         weight: productData.weight || '',
-        unit: productData.unit || '',
+        unit: productData.unit || 'kg',
         available: productData.available !== false,
         featured: productData.featured === true,
         trending: productData.trending === true,
+        // C3 FIX: include is_loose and min_quantity — missing these destroyed loose config on every edit
+        is_loose: productData.is_loose === true,
+        min_quantity: productData.min_quantity || '',
       });
 
       // Populate image URLs
@@ -81,11 +85,14 @@ export default function EditProductPage() {
 
   const onSubmit = (data) => {
     const validUrls = imageUrls.filter(u => u.trim());
+    // C5 FIX: coerce ALL numeric fields to numbers before sending
     mutation.mutate({
       ...data,
       mrp: parseFloat(data.mrp),
       price: parseFloat(data.price),
       stock: parseInt(data.stock) || 0,
+      weight: data.weight ? parseFloat(data.weight) : undefined,
+      min_quantity: data.min_quantity ? parseFloat(data.min_quantity) : undefined,
       images: validUrls,
     });
   };

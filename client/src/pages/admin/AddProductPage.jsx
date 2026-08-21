@@ -42,7 +42,16 @@ export default function AddProductPage() {
 
   const onSubmit = (data) => {
     const validUrls = imageUrls.filter(u => u.trim());
-    mutation.mutate({ ...data, images: validUrls });
+    // C5 FIX: coerce numeric fields before sending
+    mutation.mutate({
+      ...data,
+      mrp: parseFloat(data.mrp),
+      price: parseFloat(data.price),
+      stock: parseInt(data.stock) || 0,
+      weight: data.weight ? parseFloat(data.weight) : undefined,
+      min_quantity: data.min_quantity ? parseFloat(data.min_quantity) : undefined,
+      images: validUrls,
+    });
   };
 
   return (

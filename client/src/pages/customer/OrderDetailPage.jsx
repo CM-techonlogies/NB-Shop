@@ -37,7 +37,7 @@ export default function OrderDetailPage() {
   // ALL hooks MUST be invoked unconditionally at top level
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, updateQuantity } = useCart();
+  const { addToCart, addToCartWithQty, updateQuantity } = useCart();
   const { data: orderData, isLoading } = useOrderById(id);
   const uploadScreenshot = useUploadPaymentScreenshot();
 
@@ -65,11 +65,16 @@ export default function OrderDetailPage() {
     }
 
     const reader = new FileReader();
+    // C4 FIX: add onerror handler + toast.error on upload failure
+    reader.onerror = () => {
+      toast.error('Failed to read file. Please try again.');
+    };
     reader.onload = async () => {
       const base64String = reader.result;
       try {
         await uploadScreenshot.mutateAsync({ id, payload: { screenshot: base64String } });
       } catch (err) {
+        toast.error('Failed to upload screenshot. Please try again.');
         console.error('Failed to upload screenshot', err);
       }
     };
@@ -98,19 +103,34 @@ export default function OrderDetailPage() {
       const pPrice = parseFloat(item.price || item.product?.price || 0);
       const pImage = item.image || item.product?.product_images?.[0]?.url || item.product?.image || null;
       const pQty = item.qty || item.quantity || 1;
+      // mn4 FIX: use is_loose field instead of fragile regex
+      const pIsLoose = item.is_loose === true || item.product?.is_loose === true;
+      const pCustomQty = parseFloat(item.customQty || item.custom_qty || 0);
 
       if (pId) {
-        addToCart({
-          id: pId,
-          name: pName,
-          price: pPrice,
-          image: pImage,
-          stock: item.product?.stock ?? 999,
-          mrp: item.product?.mrp ?? pPrice,
-        });
-
-        if (pQty > 1) {
-          updateQuantity(pId, pQty);
+        if (pIsLoose && pCustomQty > 0) {
+          // M3 FIX: preserve customQty for loose items on reorder
+          addToCartWithQty({
+            id: pId,
+            name: pName,
+            price: pPrice,
+            image: pImage,
+            stock: item.product?.stock ?? 999,
+            mrp: item.product?.mrp ?? pPrice,
+            is_loose: true,
+            unit: item.unit || item.product?.unit || 'kg',
+            min_quantity: item.product?.min_quantity,
+          }, pCustomQty);
+        } else {
+          addToCart({
+            id: pId,
+            name: pName,
+            price: pPrice,
+            image: pImage,
+            stock: item.product?.stock ?? 999,
+            mrp: item.product?.mrp ?? pPrice,
+          });
+          if (pQty > 1) updateQuantity(pId, pQty);
         }
         count++;
       }
