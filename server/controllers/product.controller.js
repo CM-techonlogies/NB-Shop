@@ -78,9 +78,10 @@ exports.getNewArrivals = asyncHandler(async (req, res) => {
   res.json(new ApiResponse(200, data, 'New arrivals'));
 });
 
-const checkLoose = (val, minQty) => {
+const checkLoose = (val, minQty, unit) => {
   if (val === true || val === 'true' || val === 1 || val === '1') return true;
   if (minQty !== undefined && minQty !== null && parseFloat(minQty) > 0) return true;
+  if (unit && ['kg', 'g', 'gm', 'l', 'ml'].includes(String(unit).toLowerCase())) return true;
   return false;
 };
 
@@ -103,7 +104,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
     stock: parseInt(stock) || 0, weight, unit, sku, barcode,
     featured: featured === true || featured === 'true',
     trending: trending === true || trending === 'true',
-    is_loose: checkLoose(is_loose, min_quantity),
+    is_loose: checkLoose(is_loose, min_quantity, unit),
     min_quantity: min_quantity ? parseFloat(min_quantity) : null,
     tags: tags ? (Array.isArray(tags) ? tags : String(tags).split(',').map(t => t.trim())) : [],
     available: true,
@@ -135,8 +136,12 @@ exports.updateProduct = asyncHandler(async (req, res) => {
   allowed.forEach(k => { if (rest[k] !== undefined) updates[k] = rest[k]; });
 
   // Coerce boolean / numeric fields
-  if (updates.is_loose !== undefined || updates.min_quantity !== undefined) {
-    updates.is_loose = checkLoose(updates.is_loose !== undefined ? updates.is_loose : rest.is_loose, updates.min_quantity !== undefined ? updates.min_quantity : rest.min_quantity);
+  if (updates.is_loose !== undefined || updates.min_quantity !== undefined || updates.unit !== undefined) {
+    updates.is_loose = checkLoose(
+      updates.is_loose !== undefined ? updates.is_loose : rest.is_loose,
+      updates.min_quantity !== undefined ? updates.min_quantity : rest.min_quantity,
+      updates.unit !== undefined ? updates.unit : rest.unit
+    );
   }
   if (updates.min_quantity !== undefined) updates.min_quantity = updates.min_quantity ? parseFloat(updates.min_quantity) : null;
 

@@ -84,7 +84,8 @@ export default function ProductDetailPage() {
     product?.is_loose === 1 ||
     product?.is_loose === '1' ||
     (product?.is_loose && product?.is_loose !== 'false' && product?.is_loose !== '0') ||
-    (product?.min_quantity && parseFloat(product.min_quantity) > 0)
+    (product?.min_quantity && parseFloat(product.min_quantity) > 0) ||
+    ['kg', 'g', 'gm', 'l', 'ml'].includes((product?.unit || '').toLowerCase())
   );
 
   // Loose item: step & min quantity
