@@ -227,8 +227,9 @@ export default function ProductCard({ product }) {
     null;
 
   // Mock rating & review count for display if not present
-  const rating = product.rating || (4.5 + ((productId.charCodeAt(0) % 5) * 0.1)).toFixed(1);
-  const reviewCount = product.reviewCount || (50 + (productId.charCodeAt(0) * 12));
+  const safeIdStr = String(productId || '1');
+  const rating = product.rating || (4.5 + ((safeIdStr.charCodeAt(0) % 5) * 0.1)).toFixed(1);
+  const reviewCount = product.reviewCount || (50 + (safeIdStr.charCodeAt(0) * 12));
 
   const handleAdd = (e) => {
     e.preventDefault();

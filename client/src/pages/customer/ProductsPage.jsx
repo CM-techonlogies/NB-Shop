@@ -113,7 +113,7 @@ export default function ProductsPage() {
         if (!matchesDiscount) return false;
       }
 
-      // Delivery filter
+      // Delivery filter (products with price >= 499 qualify for free delivery)
       if (selectedDelivery.includes('freeDelivery') && p.price < 499) return false;
 
       return true;
@@ -451,7 +451,7 @@ export default function ProductsPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-2xl md:text-3xl font-black font-heading text-gray-900">
-                {initialSearch ? `Search: "${initialSearch}"` : 'All Products'}
+                {search ? `Search: "${search}"` : 'All Products'}
               </h1>
               <p className="text-xs text-gray-500 mt-0.5 font-medium">
                 Showing {filteredProducts.length} of {totalCount} products

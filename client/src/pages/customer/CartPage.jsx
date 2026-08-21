@@ -72,14 +72,6 @@ export default function CartPage() {
             >
               <span>➕</span> {t('add_more_items')}
             </Link>
-            <button
-              onClick={() => {
-                if (window.confirm('Clear cart? / कार्ट खाली करें?')) clearCart();
-              }}
-              className="text-xs font-bold text-gray-400 hover:text-red-600 transition-colors"
-            >
-              {t('clear_cart')}
-            </button>
           </div>
         </div>
 
