@@ -222,10 +222,7 @@ export default function ProductCard({ product }) {
     product?.is_loose === true ||
     product?.is_loose === 'true' ||
     product?.is_loose === 1 ||
-    product?.is_loose === '1' ||
-    (product?.is_loose && product?.is_loose !== 'false' && product?.is_loose !== '0') ||
-    (product?.min_quantity && parseFloat(product.min_quantity) > 0) ||
-    ['kg', 'g', 'gm', 'l', 'ml'].includes((product?.unit || '').toLowerCase())
+    product?.is_loose === '1'
   );
 
   const rawImageUrl =
