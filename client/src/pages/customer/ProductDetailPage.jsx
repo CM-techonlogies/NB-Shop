@@ -77,6 +77,7 @@ export default function ProductDetailPage() {
     : 0;
 
   const productId = product.id || product._id;
+  const cartItem = cart.find(item => String(item.id || item._id) === String(productId));
   const isLoose = product.is_loose === true || product.is_loose === 'true';
 
   // Loose item: step & min quantity
