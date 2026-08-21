@@ -48,7 +48,13 @@ export default function EditProductPage() {
         featured: productData.featured === true,
         trending: productData.trending === true,
         // C3 FIX: include is_loose and min_quantity — missing these destroyed loose config on every edit
-        is_loose: productData.is_loose === true,
+        is_loose: Boolean(
+          productData.is_loose === true ||
+          productData.is_loose === 'true' ||
+          productData.is_loose === 1 ||
+          productData.is_loose === '1' ||
+          (productData.min_quantity && parseFloat(productData.min_quantity) > 0)
+        ),
         min_quantity: productData.min_quantity || '',
       });
 

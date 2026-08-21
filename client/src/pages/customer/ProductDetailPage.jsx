@@ -78,7 +78,14 @@ export default function ProductDetailPage() {
 
   const productId = product.id || product._id;
   const cartItem = cart.find(item => String(item.id || item._id) === String(productId));
-  const isLoose = product.is_loose === true || product.is_loose === 'true';
+  const isLoose = Boolean(
+    product?.is_loose === true ||
+    product?.is_loose === 'true' ||
+    product?.is_loose === 1 ||
+    product?.is_loose === '1' ||
+    (product?.is_loose && product?.is_loose !== 'false' && product?.is_loose !== '0') ||
+    (product?.min_quantity && parseFloat(product.min_quantity) > 0)
+  );
 
   // Loose item: step & min quantity
   const looseStep = parseFloat(product.min_quantity) || 0.25;

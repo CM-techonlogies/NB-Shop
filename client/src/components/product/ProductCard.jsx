@@ -218,7 +218,14 @@ export default function ProductCard({ product }) {
   const qty = getQty(productId);
   const isOutOfStock = product.stock <= 0;
   const discount = formatDiscount(product.mrp, product.price);
-  const isLoose = product.is_loose === true || product.is_loose === 'true';
+  const isLoose = Boolean(
+    product?.is_loose === true ||
+    product?.is_loose === 'true' ||
+    product?.is_loose === 1 ||
+    product?.is_loose === '1' ||
+    (product?.is_loose && product?.is_loose !== 'false' && product?.is_loose !== '0') ||
+    (product?.min_quantity && parseFloat(product.min_quantity) > 0)
+  );
 
   const rawImageUrl =
     product.product_images?.[0]?.url ||
