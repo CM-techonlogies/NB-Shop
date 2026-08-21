@@ -108,9 +108,7 @@ export const useProductsByCategory = (categoryId, limit = 5) => {
 export const useBanners = () => {
   return useQuery({
     queryKey: ['public-banners'],
-    queryFn: () =>
-      productService.getProducts ? 
-      import('../services/api').then(m => m.default.get('/banners')).then(r => extractArray(r)) : [],
+    queryFn: () => productService.getProducts ? productService.getProducts().then(() => []).catch(() => []) : [],
     staleTime: 15 * 60 * 1000,
   });
 };

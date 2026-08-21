@@ -10,6 +10,10 @@ async function uploadToImgBB(file) {
   const formData = new FormData();
   formData.append('image', file);
 
+  if (!IMGBB_API_KEY) {
+    throw new Error('ImgBB API key is missing. Please add VITE_IMGBB_API_KEY to your environment variables.');
+  }
+
   const res = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, {
     method: 'POST',
     body: formData,
@@ -41,7 +45,7 @@ export default function ImgBBUploader({ imageUrls, setImageUrls, maxImages = 5 }
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    const remaining = maxImages - imageUrls.filter(u => u.trim()).length;
+    const remaining = maxImages - imageUrls.filter(u => typeof u === 'string' && u.trim()).length;
     const toUpload = files.slice(0, remaining);
 
     if (files.length > remaining) {
