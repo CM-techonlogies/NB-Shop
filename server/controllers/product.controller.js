@@ -79,7 +79,7 @@ exports.getNewArrivals = asyncHandler(async (req, res) => {
 });
 
 const checkLoose = (val) => {
-  if (val === true || val === 'true' || val === 1 || val === '1') return true;
+  if (val === true || val === 'true' || val === 1 || val === '1' || val === 'on') return true;
   return false;
 };
 

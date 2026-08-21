@@ -49,7 +49,7 @@ export default function AddProductPage() {
       price: parseFloat(data.price),
       stock: parseInt(data.stock) || 0,
       weight: data.weight ? parseFloat(data.weight) : undefined,
-      is_loose: !!data.is_loose,
+      is_loose: data.is_loose === true || data.is_loose === 'true' || data.is_loose === 'on' || data.is_loose === 1,
       min_quantity: data.min_quantity ? parseFloat(data.min_quantity) : undefined,
       images: validUrls,
     });
@@ -159,7 +159,7 @@ export default function AddProductPage() {
           <div className="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl">
             <label className="flex items-center gap-3 cursor-pointer">
               <div className="relative">
-                <input type="checkbox" {...register('is_loose')} className="sr-only peer" />
+                <input type="checkbox" {...register('is_loose')} id="is_loose" className="sr-only peer" />
                 <div className="w-11 h-6 bg-gray-200 peer-checked:bg-amber-500 rounded-full transition-colors peer-focus:ring-2 peer-focus:ring-amber-300" />
                 <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
               </div>
