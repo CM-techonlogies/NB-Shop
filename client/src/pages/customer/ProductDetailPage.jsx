@@ -29,8 +29,10 @@ export default function ProductDetailPage() {
   });
   const relatedProducts = (relatedData?.data || []).filter(p => p.id !== id);
 
-  const { addToCart, cart, updateQuantity } = useCart();
+  const { addToCart, addToCartWithQty, cart, updateQuantity, updateCustomQty, removeFromCart } = useCart();
   const [activeImage, setActiveImage] = useState(0);
+  // Loose item selected quantity (default: min_quantity or 0.25)
+  const [looseQty, setLooseQty] = useState(null);
 
   // ── Loading ──────────────────────────────────────────────────────────────
   if (isLoading) {
@@ -72,6 +74,18 @@ export default function ProductDetailPage() {
 
   const productId = product.id || product._id;
   const cartItem = cart.find(item => item.id === productId);
+
+  // Loose item: step & min quantity
+  const looseStep = parseFloat(product.min_quantity) || 0.25;
+  const effectiveLooseQty = looseQty ?? looseStep;
+
+  // Format loose quantity for display (e.g. 0.25 kg → 250g, 1.5 kg → 1.5 kg)
+  const formatQty = (qty, unit) => {
+    const u = (unit || 'kg').toLowerCase();
+    if ((u === 'kg') && qty < 1) return `${Math.round(qty * 1000)}g`;
+    if ((u === 'l') && qty < 1) return `${Math.round(qty * 1000)}ml`;
+    return `${qty} ${u}`;
+  };
 
   return (
     <div className="animate-fadeIn bg-[#FFF8F0] min-h-screen pb-12 md:pb-0">
@@ -215,35 +229,149 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Add to Cart / Qty controller */}
-              {cartItem ? (
-                <div className="flex items-center justify-between bg-primary-50 border border-primary-200 rounded-2xl px-4 py-3 mb-4">
-                  <span className="text-sm font-bold text-gray-700">In Cart</span>
-                  <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm h-11">
+              {/* ── Add to Cart — Loose vs Normal ────────────────────────── */}
+              {product.is_loose ? (
+                /* ── LOOSE ITEM UI ── */
+                cartItem ? (
+                  /* Already in cart → show customQty stepper + remove */
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-2">
+                      <div>
+                        <span className="text-xs font-semibold text-amber-700 block">⚖️ In Cart</span>
+                        <span className="text-sm font-black text-gray-800">
+                          {formatQty(cartItem.customQty || looseStep, product.unit)}
+                        </span>
+                      </div>
+                      <div className="flex items-center bg-white border border-amber-200 rounded-xl overflow-hidden shadow-sm h-11">
+                        <button
+                          onClick={() => {
+                            const next = parseFloat(((cartItem.customQty || looseStep) - looseStep).toFixed(3));
+                            if (next <= 0) removeFromCart(productId);
+                            else updateCustomQty(productId, next);
+                          }}
+                          className="w-11 h-full flex items-center justify-center text-gray-600 hover:bg-gray-100 text-xl font-bold transition-colors"
+                        >
+                          −
+                        </button>
+                        <span className="min-w-[56px] text-center font-black text-gray-800 text-xs px-1">
+                          {formatQty(cartItem.customQty || looseStep, product.unit)}
+                        </span>
+                        <button
+                          onClick={() => {
+                            const next = parseFloat(((cartItem.customQty || looseStep) + looseStep).toFixed(3));
+                            updateCustomQty(productId, next);
+                          }}
+                          className="w-11 h-full flex items-center justify-center text-primary-500 hover:bg-primary-50 text-xl font-bold transition-colors"
+                        >
+                          +
+                        </button>
+                      </div>
+                    </div>
                     <button
-                      onClick={() => updateQuantity(cartItem.id, cartItem.qty - 1)}
-                      className="w-11 h-full flex items-center justify-center text-gray-600 hover:bg-gray-100 text-xl font-bold transition-colors"
+                      onClick={() => removeFromCart(productId)}
+                      className="w-full text-xs font-semibold text-red-500 hover:text-red-700 py-1 transition-colors"
                     >
-                      −
-                    </button>
-                    <span className="w-10 text-center font-black text-gray-800 text-sm">{cartItem.qty}</span>
-                    <button
-                      onClick={() => updateQuantity(cartItem.id, cartItem.qty + 1)}
-                      disabled={cartItem.qty >= product.stock}
-                      className="w-11 h-full flex items-center justify-center text-primary-500 hover:bg-primary-50 text-xl font-bold transition-colors disabled:opacity-40"
-                    >
-                      +
+                      Remove from cart
                     </button>
                   </div>
-                </div>
+                ) : (
+                  /* Not in cart → quantity selector + Add to Cart */
+                  <div className="mb-4">
+                    {/* Quantity Stepper */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">
+                      <p className="text-xs font-bold text-amber-700 mb-3 flex items-center gap-1.5">
+                        ⚖️ Select Quantity <span className="text-amber-500 font-medium">(loose item — sold by weight)</span>
+                      </p>
+                      <div className="flex items-center justify-between gap-3">
+                        <button
+                          onClick={() => {
+                            const next = parseFloat((effectiveLooseQty - looseStep).toFixed(3));
+                            if (next >= looseStep) setLooseQty(next);
+                          }}
+                          disabled={effectiveLooseQty <= looseStep}
+                          className="w-12 h-12 flex items-center justify-center bg-white border border-amber-300 rounded-xl text-2xl font-bold text-amber-700 hover:bg-amber-100 active:scale-95 transition-all disabled:opacity-30 shadow-sm"
+                        >
+                          −
+                        </button>
+                        <div className="flex-1 text-center">
+                          <span className="text-2xl font-black text-gray-900">
+                            {formatQty(effectiveLooseQty, product.unit)}
+                          </span>
+                          <p className="text-[10px] text-gray-400 mt-0.5">
+                            step: {formatQty(looseStep, product.unit)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => setLooseQty(parseFloat((effectiveLooseQty + looseStep).toFixed(3)))}
+                          className="w-12 h-12 flex items-center justify-center bg-white border border-amber-300 rounded-xl text-2xl font-bold text-amber-700 hover:bg-amber-100 active:scale-95 transition-all shadow-sm"
+                        >
+                          +
+                        </button>
+                      </div>
+                      {/* Quick select presets */}
+                      <div className="flex gap-2 mt-3 flex-wrap">
+                        {[looseStep, looseStep * 2, looseStep * 4, 1, 2].filter((v, i, arr) =>
+                          arr.indexOf(v) === i && v > 0
+                        ).slice(0, 4).map(preset => (
+                          <button
+                            key={preset}
+                            onClick={() => setLooseQty(parseFloat(preset.toFixed(3)))}
+                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                              effectiveLooseQty === parseFloat(preset.toFixed(3))
+                                ? 'bg-amber-500 text-white border-amber-500'
+                                : 'bg-white text-amber-700 border-amber-200 hover:border-amber-400'
+                            }`}
+                          >
+                            {formatQty(preset, product.unit)}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Add to Cart button */}
+                    <button
+                      onClick={() => {
+                        addToCartWithQty(product, effectiveLooseQty);
+                      }}
+                      disabled={product.stock <= 0}
+                      className="w-full bg-primary-500 hover:bg-primary-600 active:scale-[0.98] disabled:bg-gray-300 text-white font-black py-3.5 rounded-2xl transition-all text-base shadow-md shadow-orange-200"
+                    >
+                      {product.stock > 0
+                        ? `🛒 Add ${formatQty(effectiveLooseQty, product.unit)} to Cart`
+                        : t('out_of_stock')}
+                    </button>
+                  </div>
+                )
               ) : (
-                <button
-                  onClick={() => addToCart(product)}
-                  disabled={product.stock <= 0}
-                  className="w-full bg-primary-500 hover:bg-primary-600 active:scale-[0.98] disabled:bg-gray-300 text-white font-black py-3.5 rounded-2xl transition-all text-base shadow-md shadow-orange-200 mb-4"
-                >
-                  {product.stock > 0 ? `🛒 ${t('add_to_cart')}` : t('out_of_stock')}
-                </button>
+                /* ── NORMAL ITEM UI ── */
+                cartItem ? (
+                  <div className="flex items-center justify-between bg-primary-50 border border-primary-200 rounded-2xl px-4 py-3 mb-4">
+                    <span className="text-sm font-bold text-gray-700">In Cart</span>
+                    <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm h-11">
+                      <button
+                        onClick={() => updateQuantity(cartItem.id, cartItem.qty - 1)}
+                        className="w-11 h-full flex items-center justify-center text-gray-600 hover:bg-gray-100 text-xl font-bold transition-colors"
+                      >
+                        −
+                      </button>
+                      <span className="w-10 text-center font-black text-gray-800 text-sm">{cartItem.qty}</span>
+                      <button
+                        onClick={() => updateQuantity(cartItem.id, cartItem.qty + 1)}
+                        disabled={cartItem.qty >= product.stock}
+                        className="w-11 h-full flex items-center justify-center text-primary-500 hover:bg-primary-50 text-xl font-bold transition-colors disabled:opacity-40"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => addToCart(product)}
+                    disabled={product.stock <= 0}
+                    className="w-full bg-primary-500 hover:bg-primary-600 active:scale-[0.98] disabled:bg-gray-300 text-white font-black py-3.5 rounded-2xl transition-all text-base shadow-md shadow-orange-200 mb-4"
+                  >
+                    {product.stock > 0 ? `🛒 ${t('add_to_cart')}` : t('out_of_stock')}
+                  </button>
+                )
               )}
 
               {/* Trust Badges — compact 3-column */}

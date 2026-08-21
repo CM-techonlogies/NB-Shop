@@ -141,6 +141,20 @@ const useCartStore = create((set, get) => ({
     saveUserCart(state.currentUserId, updated);
     return { items: updated };
   }),
+
+  // Loose item: update customQty (decimal, e.g. 0.25 kg)
+  updateCustomQty: (id, customQty) => set((state) => {
+    const currentItems = Array.isArray(state.items) ? state.items : [];
+    const qty = parseFloat(customQty);
+    let updated;
+    if (isNaN(qty) || qty <= 0) {
+      updated = currentItems.filter(i => !matchId(i, id));
+    } else {
+      updated = currentItems.map(i => matchId(i, id) ? { ...i, customQty: qty } : i);
+    }
+    saveUserCart(state.currentUserId, updated);
+    return { items: updated };
+  }),
 }));
 
 export default useCartStore;

@@ -50,12 +50,22 @@ export const useCart = () => {
     store.addItem({ ...product, id });
   };
 
+  // For loose items: pass customQty (e.g. 0.5 kg)
+  const addToCartWithQty = (product, customQty) => {
+    const id = resolveId(product);
+    store.addItem({ ...product, id, customQty: parseFloat(customQty) });
+  };
+
   const removeFromCart = (productId) => {
     store.removeItem(productId);
   };
 
   const updateQuantity = (productId, qty) => {
     store.updateQty(productId, qty);
+  };
+
+  const updateCustomQty = (productId, customQty) => {
+    store.updateCustomQty(productId, customQty);
   };
 
   return {
@@ -73,8 +83,10 @@ export const useCart = () => {
     getQty,
     getItem,
     addToCart,
+    addToCartWithQty,
     removeFromCart,
     updateQuantity,
+    updateCustomQty,
     clearCart: store.clearCart,
   };
 };
