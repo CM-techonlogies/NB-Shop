@@ -49,6 +49,7 @@ export default function AddProductPage() {
       price: parseFloat(data.price),
       stock: parseInt(data.stock) || 0,
       weight: data.weight ? parseFloat(data.weight) : undefined,
+      is_loose: !!data.is_loose,
       min_quantity: data.min_quantity ? parseFloat(data.min_quantity) : undefined,
       images: validUrls,
     });

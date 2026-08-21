@@ -77,7 +77,7 @@ export default function ProductDetailPage() {
     : 0;
 
   const productId = product.id || product._id;
-  const cartItem = cart.find(item => item.id === productId);
+  const isLoose = product.is_loose === true || product.is_loose === 'true';
 
   // Loose item: step & min quantity
   const looseStep = parseFloat(product.min_quantity) || 0.25;
@@ -130,7 +130,7 @@ export default function ProductDetailPage() {
                     {discount}% OFF
                   </div>
                 )}
-                {product.is_loose && (
+                {isLoose && (
                   <div className="absolute top-2 right-2 z-10 bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
                     ⚖️ Loose
                   </div>
@@ -234,7 +234,7 @@ export default function ProductDetailPage() {
               </div>
 
               {/* ── Add to Cart — Loose vs Normal ────────────────────────── */}
-              {product.is_loose ? (
+              {isLoose ? (
                 /* ── LOOSE ITEM UI ── */
                 cartItem ? (
                   /* Already in cart → show customQty stepper + remove */

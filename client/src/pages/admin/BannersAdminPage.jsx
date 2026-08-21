@@ -6,6 +6,7 @@ import { STORE_NAME } from '../../constants';
 import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import Spinner from '../../components/ui/Spinner';
 import toast from 'react-hot-toast';
+import ImgBBUploader from '../../components/admin/ImgBBUploader';
 
 const EMPTY_FORM = {
   title: '',
@@ -250,27 +251,20 @@ export default function BannersAdminPage() {
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Image URL & Gallery Upload */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Image URL *</label>
-                <input
-                  type="url"
-                  required
-                  placeholder="https://example.com/banner.jpg"
-                  value={form.image_url}
-                  onChange={(e) => setForm({ ...form, image_url: e.target.value })}
-                  className="w-full p-2.5 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-300"
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-gray-700">Banner Image *</label>
+                  <span className="text-[11px] bg-green-100 text-green-700 font-bold px-2 py-0.5 rounded-full">Gallery / ImgBB CDN</span>
+                </div>
+                <p className="text-xs text-gray-400 mb-2">
+                  📷 Select from phone/computer gallery or upload photo:
+                </p>
+                <ImgBBUploader
+                  imageUrls={form.image_url ? [form.image_url] : ['']}
+                  setImageUrls={(urls) => setForm(f => ({ ...f, image_url: urls[0] || '' }))}
+                  maxImages={1}
                 />
-                {form.image_url && (
-                  <div className="mt-2 h-28 rounded-xl bg-gray-100 overflow-hidden border border-gray-200">
-                    <img
-                      src={form.image_url}
-                      alt="preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                  </div>
-                )}
               </div>
 
               {/* Destination Link */}
