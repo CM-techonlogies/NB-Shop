@@ -44,7 +44,7 @@ export default function ProductsAdminPage() {
   });
 
   const toggleLooseMutation = useMutation({
-    mutationFn: (id) => productService.toggleLoose(id),
+    mutationFn: ({ id, is_loose }) => productService.toggleLoose(id, is_loose),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
@@ -137,8 +137,9 @@ export default function ProductsAdminPage() {
                   <td className="px-6 py-4">
                     <button
                       type="button"
-                      onClick={() => toggleLooseMutation.mutate(product.id)}
-                      className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                      onClick={() => toggleLooseMutation.mutate({ id: product.id, is_loose: product.is_loose })}
+                      disabled={toggleLooseMutation.isLoading}
+                      className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer disabled:opacity-50 ${
                         product.is_loose
                           ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 shadow-2xs'
                           : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
