@@ -45,10 +45,11 @@ export default function ImgBBUploader({ imageUrls, setImageUrls, maxImages = 5 }
     const files = Array.from(e.target.files);
     if (!files.length) return;
 
-    const remaining = maxImages - imageUrls.filter(u => typeof u === 'string' && u.trim()).length;
+    const countFilled = imageUrls.filter(u => typeof u === 'string' && u.trim()).length;
+    const remaining = maxImages === 1 ? 1 : Math.max(0, maxImages - countFilled);
     const toUpload = files.slice(0, remaining);
 
-    if (files.length > remaining) {
+    if (files.length > remaining && maxImages > 1) {
       toast.error(`Only ${remaining} more image${remaining !== 1 ? 's' : ''} allowed (max ${maxImages})`);
     }
 
@@ -90,21 +91,23 @@ export default function ImgBBUploader({ imageUrls, setImageUrls, maxImages = 5 }
     }
 
     if (uploadedUrls.length > 0) {
-      // Replace empty slots first, then append
-      setImageUrls(prev => {
-        const existing = [...prev];
-        let added = 0;
-        for (let i = 0; i < existing.length && added < uploadedUrls.length; i++) {
-          if (!existing[i].trim()) {
-            existing[i] = uploadedUrls[added++];
+      if (maxImages === 1) {
+        setImageUrls([uploadedUrls[0]]);
+      } else {
+        setImageUrls(prev => {
+          const existing = Array.isArray(prev) ? [...prev] : [];
+          let added = 0;
+          for (let i = 0; i < existing.length && added < uploadedUrls.length; i++) {
+            if (!existing[i] || !existing[i].trim()) {
+              existing[i] = uploadedUrls[added++];
+            }
           }
-        }
-        // If still more, append
-        while (added < uploadedUrls.length && existing.length < maxImages) {
-          existing.push(uploadedUrls[added++]);
-        }
-        return existing;
-      });
+          while (added < uploadedUrls.length && existing.length < maxImages) {
+            existing.push(uploadedUrls[added++]);
+          }
+          return existing;
+        });
+      }
       toast.success(`${uploadedUrls.length} image${uploadedUrls.length > 1 ? 's' : ''} uploaded successfully!`);
     }
 
@@ -131,7 +134,7 @@ export default function ImgBBUploader({ imageUrls, setImageUrls, maxImages = 5 }
     if (imageUrls.length < maxImages) setImageUrls([...imageUrls, '']);
   };
 
-  const canAddMore = imageUrls.filter(u => u.trim()).length < maxImages;
+  const canAddMore = maxImages === 1 ? true : (imageUrls.filter(u => typeof u === 'string' && u.trim()).length < maxImages);
 
   return (
     <div>

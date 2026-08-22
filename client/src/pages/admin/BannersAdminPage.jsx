@@ -35,6 +35,7 @@ export default function BannersAdminPage() {
     mutationFn: (d) => adminService.createBanner(d),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
+      queryClient.invalidateQueries({ queryKey: ['public-banners'] });
       toast.success('Banner created successfully!');
       closeModal();
     },
@@ -48,6 +49,7 @@ export default function BannersAdminPage() {
     mutationFn: ({ id, data }) => adminService.updateBanner(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
+      queryClient.invalidateQueries({ queryKey: ['public-banners'] });
       toast.success('Banner updated successfully!');
       closeModal();
     },
@@ -61,6 +63,7 @@ export default function BannersAdminPage() {
     mutationFn: (id) => adminService.deleteBanner(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
+      queryClient.invalidateQueries({ queryKey: ['public-banners'] });
       toast.success('Banner deleted!');
     },
     onError: () => toast.error('Failed to delete banner'),
@@ -262,7 +265,19 @@ export default function BannersAdminPage() {
                 </p>
                 <ImgBBUploader
                   imageUrls={form.image_url ? [form.image_url] : ['']}
-                  setImageUrls={(urls) => setForm(f => ({ ...f, image_url: urls[0] || '' }))}
+                  setImageUrls={(val) => {
+                    if (typeof val === 'function') {
+                      setForm(f => {
+                        const current = f.image_url ? [f.image_url] : [''];
+                        const updated = val(current);
+                        return { ...f, image_url: Array.isArray(updated) ? (updated[0] || '') : (updated || '') };
+                      });
+                    } else if (Array.isArray(val)) {
+                      setForm(f => ({ ...f, image_url: val[0] || '' }));
+                    } else {
+                      setForm(f => ({ ...f, image_url: val || '' }));
+                    }
+                  }}
                   maxImages={1}
                 />
               </div>

@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { productService } from '../services/product.service';
 import { categoryService } from '../services/category.service';
+import api from '../services/api';
 
 // Helper: safely extract array from API response
 // Handles both: r.data.data (paginated) and r.data (direct array)
@@ -108,7 +109,7 @@ export const useProductsByCategory = (categoryId, limit = 5) => {
 export const useBanners = () => {
   return useQuery({
     queryKey: ['public-banners'],
-    queryFn: () => productService.getProducts ? productService.getProducts().then(() => []).catch(() => []) : [],
-    staleTime: 15 * 60 * 1000,
+    queryFn: () => api.get('/banners').then(r => r.data?.data || r.data || []).catch(() => []),
+    staleTime: 2 * 60 * 1000,
   });
 };
