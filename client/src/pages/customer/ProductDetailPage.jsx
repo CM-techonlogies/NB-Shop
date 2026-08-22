@@ -13,6 +13,7 @@ import { StarIcon } from '@heroicons/react/24/solid';
 import Spinner from '../../components/ui/Spinner';
 import { useLanguageStore } from '../../store/languageStore';
 import { getProductName, getProductDescription } from '../../utils/language';
+import LooseDetailSelector from '../../components/product/LooseDetailSelector';
 
 const PLACEHOLDER = 'https://via.placeholder.com/400x400?text=No+Image';
 
@@ -245,174 +246,15 @@ export default function ProductDetailPage() {
 
               {/* ── Add to Cart — Loose vs Normal ────────────────────────── */}
               {isLoose ? (
-                /* ── LOOSE ITEM UI ── */
-                cartItem ? (
-                  /* Already in cart → show customQty stepper + remove */
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 mb-2">
-                      <div>
-                        <span className="text-xs font-semibold text-amber-700 block">⚖️ In Cart</span>
-                        <span className="text-sm font-black text-gray-800">
-                          {formatQty(cartItem.customQty || looseStep, product.unit)}
-                        </span>
-                      </div>
-                      <div className="flex items-center bg-white border border-amber-200 rounded-xl overflow-hidden shadow-sm h-11">
-                        <button
-                          onClick={() => {
-                            const next = parseFloat(((cartItem.customQty || looseStep) - looseStep).toFixed(3));
-                            if (next <= 0) removeFromCart(productId);
-                            else updateCustomQty(productId, next);
-                          }}
-                          className="w-11 h-full flex items-center justify-center text-gray-600 hover:bg-gray-100 text-xl font-bold transition-colors"
-                        >
-                          −
-                        </button>
-                        <span className="min-w-[56px] text-center font-black text-gray-800 text-xs px-1">
-                          {formatQty(cartItem.customQty || looseStep, product.unit)}
-                        </span>
-                        <button
-                          onClick={() => {
-                            const next = parseFloat(((cartItem.customQty || looseStep) + looseStep).toFixed(3));
-                            updateCustomQty(productId, next);
-                          }}
-                          className="w-11 h-full flex items-center justify-center text-primary-500 hover:bg-primary-50 text-xl font-bold transition-colors"
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => removeFromCart(productId)}
-                      className="w-full text-xs font-semibold text-red-500 hover:text-red-700 py-1 transition-colors"
-                    >
-                      Remove from cart
-                    </button>
-                  </div>
-                ) : (
-                  /* Not in cart → quantity selector + Add to Cart */
-                  <div className="mb-4">
-                    {/* Quantity Stepper */}
-                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-3">
-                      <p className="text-xs font-bold text-amber-700 mb-3 flex items-center gap-1.5">
-                        ⚖️ Select Quantity <span className="text-amber-500 font-medium">(loose item — sold by weight)</span>
-                      </p>
-                      <div className="flex items-center justify-between gap-3">
-                        <button
-                          onClick={() => {
-                            const next = parseFloat((effectiveLooseQty - looseStep).toFixed(3));
-                            if (next >= looseStep) setLooseQty(next);
-                          }}
-                          disabled={effectiveLooseQty <= looseStep}
-                          className="w-12 h-12 flex items-center justify-center bg-white border border-amber-300 rounded-xl text-2xl font-bold text-amber-700 hover:bg-amber-100 active:scale-95 transition-all disabled:opacity-30 shadow-sm"
-                        >
-                          −
-                        </button>
-
-                        {/* Center: tappable qty display OR custom input */}
-                        {customInputMode ? (
-                          <div className="flex-1 flex flex-col items-center gap-1">
-                            <div className="flex items-center gap-1 bg-white border-2 border-amber-400 rounded-xl px-3 py-1.5 w-full">
-                              <input
-                                ref={customInputRef}
-                                type="number"
-                                step={looseStep}
-                                min={looseStep}
-                                value={customInputVal}
-                                onChange={e => setCustomInputVal(e.target.value)}
-                                onKeyDown={e => {
-                                  if (e.key === 'Enter') {
-                                    const parsed = parseFloat(customInputVal);
-                                    if (!isNaN(parsed) && parsed >= looseStep) {
-                                      setLooseQty(parseFloat(parsed.toFixed(3)));
-                                    }
-                                    setCustomInputMode(false);
-                                  }
-                                  if (e.key === 'Escape') setCustomInputMode(false);
-                                }}
-                                className="flex-1 text-center text-lg font-black text-gray-900 outline-none bg-transparent w-full"
-                                placeholder={`e.g. 0.75`}
-                                autoFocus
-                              />
-                              <span className="text-sm font-bold text-amber-600 flex-shrink-0">{product.unit || 'kg'}</span>
-                            </div>
-                            <div className="flex gap-1.5 w-full">
-                              <button
-                                onClick={() => {
-                                  const parsed = parseFloat(customInputVal);
-                                  if (!isNaN(parsed) && parsed >= looseStep) {
-                                    setLooseQty(parseFloat(parsed.toFixed(3)));
-                                  }
-                                  setCustomInputMode(false);
-                                }}
-                                className="flex-1 py-1 bg-amber-500 text-white text-xs font-bold rounded-lg"
-                              >
-                                ✓ Set
-                              </button>
-                              <button
-                                onClick={() => setCustomInputMode(false)}
-                                className="flex-1 py-1 bg-gray-100 text-gray-600 text-xs font-bold rounded-lg"
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setCustomInputVal(effectiveLooseQty.toString());
-                              setCustomInputMode(true);
-                              setTimeout(() => customInputRef.current?.focus(), 50);
-                            }}
-                            className="flex-1 text-center group"
-                            title="Tap to enter custom quantity"
-                          >
-                            <span className="text-2xl font-black text-gray-900 group-hover:text-amber-600 transition-colors">
-                              {formatQty(effectiveLooseQty, product.unit)}
-                            </span>
-                            <p className="text-[10px] text-amber-500 mt-0.5 font-semibold">✏️ tap to customize</p>
-                          </button>
-                        )}
-
-                        <button
-                          onClick={() => setLooseQty(parseFloat((effectiveLooseQty + looseStep).toFixed(3)))}
-                          className="w-12 h-12 flex items-center justify-center bg-white border border-amber-300 rounded-xl text-2xl font-bold text-amber-700 hover:bg-amber-100 active:scale-95 transition-all shadow-sm"
-                        >
-                          +
-                        </button>
-                      </div>
-                      {/* Quick select presets */}
-                      <div className="flex gap-2 mt-3 flex-wrap">
-                        {[looseStep, looseStep * 2, looseStep * 4, 1, 2].filter((v, i, arr) =>
-                          arr.indexOf(v) === i && v > 0
-                        ).slice(0, 4).map(preset => (
-                          <button
-                            key={preset}
-                            onClick={() => setLooseQty(parseFloat(preset.toFixed(3)))}
-                            className={`flex-1 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                              effectiveLooseQty === parseFloat(preset.toFixed(3))
-                                ? 'bg-amber-500 text-white border-amber-500'
-                                : 'bg-white text-amber-700 border-amber-200 hover:border-amber-400'
-                            }`}
-                          >
-                            {formatQty(preset, product.unit)}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    {/* Add to Cart button */}
-                    <button
-                      onClick={() => {
-                        addToCartWithQty(product, effectiveLooseQty);
-                      }}
-                      disabled={product.stock <= 0}
-                      className="w-full bg-primary-500 hover:bg-primary-600 active:scale-[0.98] disabled:bg-gray-300 text-white font-black py-3.5 rounded-2xl transition-all text-base shadow-md shadow-orange-200"
-                    >
-                      {product.stock > 0
-                        ? `🛒 Add ${formatQty(effectiveLooseQty, product.unit)} to Cart`
-                        : t('out_of_stock')}
-                    </button>
-                  </div>
-                )
+                <LooseDetailSelector
+                  product={product}
+                  cartItem={cartItem}
+                  onAddToCart={(customQty, customDisplay) => {
+                    addToCart({ ...product, customQty, customDisplay, qty: 1 });
+                  }}
+                  onUpdateCart={(customQty) => updateCustomQty(productId, customQty)}
+                  onRemove={(id) => removeFromCart(id)}
+                />
               ) : (
                 /* ── NORMAL ITEM UI ── */
                 cartItem ? (
