@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="splash-active">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
@@ -50,6 +50,7 @@
     <style>
       *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
       html,body{height:100%;background:#0D0D0D;font-family:'Poppins',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+      html.splash-active, body.splash-active{overflow:hidden !important;height:100vh !important;width:100vw !important}
       #root{min-height:100%}
 
       /* Netflix-style Splash Overlay */
@@ -187,7 +188,7 @@
       }
     </style>
   </head>
-  <body>
+  <body class="splash-active">
     <!-- Netflix-style Splash Screen -->
     <div id="nb-splash">
       <div class="nb-bg-glow"></div>
@@ -218,6 +219,8 @@
 
           setTimeout(function() {
             splash.classList.add('fade-out');
+            document.documentElement.classList.remove('splash-active');
+            document.body.classList.remove('splash-active');
             setTimeout(function(){ splash.remove(); }, 800);
           }, remaining);
         }
