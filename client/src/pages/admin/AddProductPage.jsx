@@ -19,6 +19,7 @@ export default function AddProductPage() {
 
   // Up to 5 image URL inputs
   const [imageUrls, setImageUrls] = useState(['']);
+  const [isLoose, setIsLoose] = useState(false);
 
   const addImageUrl = () => {
     if (imageUrls.length < 5) setImageUrls([...imageUrls, '']);
@@ -52,8 +53,8 @@ export default function AddProductPage() {
       price: parseFloat(data.price),
       stock: parseInt(data.stock) || 0,
       weight: data.weight ? parseFloat(data.weight) : undefined,
-      is_loose: data.is_loose === true || data.is_loose === 'true' || data.is_loose === 'on' || data.is_loose === 1,
-      min_quantity: data.min_quantity ? parseFloat(data.min_quantity) : undefined,
+      is_loose: Boolean(isLoose),
+      min_quantity: isLoose && data.min_quantity ? parseFloat(data.min_quantity) : undefined,
       images: validUrls,
       tags: tagsList,
     });
@@ -169,30 +170,52 @@ export default function AddProductPage() {
           </div>
 
           {/* Loose Item Toggle */}
-          <div className="mt-5 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <div className="relative">
-                <input type="checkbox" {...register('is_loose')} id="is_loose" className="sr-only peer" />
-                <div className="w-11 h-6 bg-gray-200 peer-checked:bg-amber-500 rounded-full transition-colors peer-focus:ring-2 peer-focus:ring-amber-300" />
-                <div className="absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5" />
-              </div>
+          <div className={`mt-5 p-4 rounded-xl border transition-all ${
+            isLoose ? 'bg-amber-50 border-amber-300 shadow-xs' : 'bg-gray-50 border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="font-bold text-gray-800 text-sm">⚖️ Loose Item (तौल से बिकने वाला)</p>
-                <p className="text-xs text-gray-500 mt-0.5">Customer will choose quantity (e.g. 250g, 1.5 kg) before adding to cart</p>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-gray-900 text-sm">⚖️ Loose Item (तौल से बिकने वाला)</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${
+                    isLoose ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {isLoose ? 'ON — Loose' : 'OFF — Packed'}
+                  </span>
+                </div>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  Customer will choose quantity (e.g. 250g, 1.5 kg) before adding to cart
+                </p>
               </div>
-            </label>
 
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Minimum Order Quantity <span className="text-gray-400 font-normal">(Optional)</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <input type="number" step="0.01" min="0" {...register('min_quantity')}
-                  className="w-40 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 outline-none text-sm"
-                  placeholder="e.g. 0.25" />
-                <span className="text-sm text-gray-500">same unit as selected above (e.g. 0.25 kg = 250g min)</span>
-              </div>
+              <button
+                type="button"
+                onClick={() => setIsLoose(!isLoose)}
+                className={`relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  isLoose ? 'bg-amber-500' : 'bg-gray-300'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    isLoose ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
             </div>
+
+            {isLoose && (
+              <div className="mt-4 pt-3 border-t border-amber-200">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Minimum Order Quantity <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input type="number" step="0.01" min="0" {...register('min_quantity')}
+                    className="w-40 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-400 outline-none text-sm bg-white"
+                    placeholder="e.g. 0.25" />
+                  <span className="text-sm text-gray-500">same unit as selected above (e.g. 0.25 kg = 250g min)</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

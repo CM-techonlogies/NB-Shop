@@ -13,6 +13,7 @@ router.post('/', protect, adminOnly, productController.createProduct);
 router.put('/:id', protect, adminOnly, productController.updateProduct);
 router.delete('/:id', protect, adminOnly, productController.deleteProduct);
 router.patch('/:id/toggle', protect, adminOnly, productController.toggleAvailability);
+router.patch('/:id/toggle-loose', protect, adminOnly, productController.toggleLoose);
 router.patch('/:id/stock', protect, adminOnly, productController.updateStock);
 
 module.exports = router;

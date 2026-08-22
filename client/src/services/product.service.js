@@ -11,5 +11,6 @@ export const productService = {
   updateProduct: (id, data) => api.put(`/products/${id}`, data),
   deleteProduct: (id) => api.delete(`/products/${id}`),
   toggleAvailability: (id) => api.patch(`/products/${id}/toggle`),
+  toggleLoose: (id) => api.patch(`/products/${id}/toggle-loose`),
   updateStock: (id, stock) => api.patch(`/products/${id}/stock`, { stock }),
 };

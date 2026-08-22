@@ -79,8 +79,14 @@ exports.getNewArrivals = asyncHandler(async (req, res) => {
 });
 
 const checkLoose = (val) => {
-  if (val === true || val === 'true' || val === 1 || val === '1' || val === 'on') return true;
-  return false;
+  if (val === true || val === 1) return true;
+  if (val === false || val === 0 || val === null || val === undefined) return false;
+  if (Array.isArray(val)) return val.some(v => checkLoose(v));
+  if (typeof val === 'string') {
+    const s = val.trim().toLowerCase();
+    return s === 'true' || s === 'on' || s === '1' || s === 'yes';
+  }
+  return Boolean(val);
 };
 
 // Admin creates product — images are URL strings in req.body.images (array or comma-separated)
@@ -174,6 +180,18 @@ exports.toggleAvailability = asyncHandler(async (req, res) => {
     .update({ available: !p.available }).eq('id', req.params.id).select().single();
   if (error) throw new ApiError(400, error.message);
   res.json(new ApiResponse(200, data, 'Availability toggled'));
+});
+
+exports.toggleLoose = asyncHandler(async (req, res) => {
+  const { data: p } = await supabase.from('products').select('is_loose').eq('id', req.params.id).single();
+  const nextLoose = !p.is_loose;
+  const { data, error } = await supabase.from('products')
+    .update({ is_loose: nextLoose, updated_at: new Date().toISOString() })
+    .eq('id', req.params.id)
+    .select()
+    .single();
+  if (error) throw new ApiError(400, error.message);
+  res.json(new ApiResponse(200, data, 'Loose status toggled'));
 });
 
 exports.updateStock = asyncHandler(async (req, res) => {

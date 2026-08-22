@@ -43,6 +43,16 @@ export default function ProductsAdminPage() {
     onError: () => toast.error('Failed to toggle availability'),
   });
 
+  const toggleLooseMutation = useMutation({
+    mutationFn: (id) => productService.toggleLoose(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast.success('Product type updated!');
+    },
+    onError: () => toast.error('Failed to toggle product type'),
+  });
+
   const handleDelete = (product) => {
     if (window.confirm(`Delete "${product.name}"? This cannot be undone.`)) {
       deleteMutation.mutate(product.id);
@@ -89,15 +99,16 @@ export default function ProductsAdminPage() {
                 <th className="px-6 py-4">Category</th>
                 <th className="px-6 py-4">Price</th>
                 <th className="px-6 py-4">Stock</th>
+                <th className="px-6 py-4">Type</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-sm">
               {isLoading ? (
-                <tr><td colSpan="6" className="text-center py-10 text-gray-500">Loading products...</td></tr>
+                <tr><td colSpan="7" className="text-center py-10 text-gray-500">Loading products...</td></tr>
               ) : products.length === 0 ? (
-                <tr><td colSpan="6" className="text-center py-10 text-gray-400">No products found. <Link to="/admin/products/add" className="text-indigo-600 font-semibold">Add one!</Link></td></tr>
+                <tr><td colSpan="7" className="text-center py-10 text-gray-400">No products found. <Link to="/admin/products/add" className="text-indigo-600 font-semibold">Add one!</Link></td></tr>
               ) : products.map(product => (
                 <tr key={product.id} className="hover:bg-gray-50 transition-colors group">
                   <td className="px-6 py-4">
@@ -122,6 +133,20 @@ export default function ProductsAdminPage() {
                     <span className={`font-semibold ${product.stock <= 5 ? 'text-red-500' : 'text-gray-900'}`}>
                       {product.stock}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <button
+                      type="button"
+                      onClick={() => toggleLooseMutation.mutate(product.id)}
+                      className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-lg border transition-all cursor-pointer ${
+                        product.is_loose
+                          ? 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-amber-100 shadow-2xs'
+                          : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'
+                      }`}
+                      title="Click to switch between Loose (तौल) and Packed"
+                    >
+                      {product.is_loose ? '⚖️ Loose' : '📦 Packed'}
+                    </button>
                   </td>
                   <td className="px-6 py-4">
                     <button
