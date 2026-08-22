@@ -12,6 +12,7 @@ import {
 import { StarIcon } from '@heroicons/react/24/solid';
 import Spinner from '../../components/ui/Spinner';
 import { useLanguageStore } from '../../store/languageStore';
+import { getProductName, getProductDescription } from '../../utils/language';
 
 const PLACEHOLDER = 'https://via.placeholder.com/400x400?text=No+Image';
 
@@ -19,7 +20,7 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: productData, isLoading } = useProductById(id);
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
 
   const product = productData?.data ?? productData;
 
@@ -97,11 +98,14 @@ export default function ProductDetailPage() {
     return `${qty} ${u}`;
   };
 
+  const productName = getProductName(product, language);
+  const productDesc = getProductDescription(product, language);
+
   return (
     <div className="animate-fadeIn bg-[#FFF8F0] min-h-screen pb-12 md:pb-0">
       <Helmet>
-        <title>{`${product.name} - ${STORE_NAME}`}</title>
-        <meta name="description" content={product.description || `Buy ${product.name} at NB Shop`} />
+        <title>{`${productName} - ${STORE_NAME}`}</title>
+        <meta name="description" content={productDesc || `Buy ${productName} at NB Shop`} />
       </Helmet>
 
       {/* ── TOP BACK BAR (mobile) ────────────────────────────────────────── */}
@@ -113,10 +117,10 @@ export default function ProductDetailPage() {
           <ChevronLeftIcon className="w-5 h-5 text-gray-700" />
         </button>
         <span className="text-sm font-bold text-gray-800 truncate mx-3 flex-1 text-center">
-          {product.name}
+          {productName}
         </span>
         <button
-          onClick={() => navigator.share?.({ title: product.name, url: window.location.href })}
+          onClick={() => navigator.share?.({ title: productName, url: window.location.href })}
           className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center active:scale-95 transition-transform"
         >
           <ShareIcon className="w-4 h-4 text-gray-700" />
@@ -193,7 +197,7 @@ export default function ProductDetailPage() {
 
               {/* Product Name */}
               <h1 className="text-lg md:text-xl font-black font-heading text-gray-900 mb-2.5 leading-snug">
-                {product.name}
+                {productName}
               </h1>
 
               {/* Weight + Stock badges */}
@@ -457,11 +461,13 @@ export default function ProductDetailPage() {
               </div>
 
               {/* Description */}
-              {product.description && (
-                <div className="border-t border-gray-100 pt-4">
-                  <h3 className="text-sm font-bold text-gray-800 mb-2">{t('product_details')}</h3>
-                  <p className="text-gray-500 text-sm leading-relaxed whitespace-pre-line">
-                    {product.description}
+              {productDesc && (
+                <div className="mb-6 pt-4 border-t border-gray-100">
+                  <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">
+                    {t('product_details')}
+                  </h3>
+                  <p className="text-xs text-gray-600 leading-relaxed font-normal whitespace-pre-line">
+                    {productDesc}
                   </p>
                 </div>
               )}

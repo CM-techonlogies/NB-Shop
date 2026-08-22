@@ -1,9 +1,12 @@
 import React from 'react';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice } from '../../utils/formatPrice';
+import { useLanguageStore } from '../../store/languageStore';
+import { getProductName } from '../../utils/language';
 
 export default function CartItem({ item }) {
   const { updateQuantity, removeFromCart } = useCart();
+  const { language } = useLanguageStore();
 
   const productId = item.id;
   const isLoose = item.customQty !== undefined;
@@ -33,7 +36,7 @@ export default function CartItem({ item }) {
       </div>
 
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-semibold text-gray-800 truncate mb-0.5">{item.name}</h4>
+        <h4 className="text-sm font-semibold text-gray-800 truncate mb-0.5">{getProductName(item, language)}</h4>
         {isLoose ? (
           <div className="text-xs text-amber-600 font-medium mb-1">
             ⚖️ {customQty} {unit} × {formatPrice(item.price)}/{unit}

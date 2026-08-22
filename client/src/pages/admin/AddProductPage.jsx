@@ -42,7 +42,10 @@ export default function AddProductPage() {
 
   const onSubmit = (data) => {
     const validUrls = imageUrls.filter(u => u.trim());
-    // C5 FIX: coerce numeric fields before sending
+    const tagsList = data.tags ? (Array.isArray(data.tags) ? [...data.tags] : String(data.tags).split(',').map(t => t.trim())) : [];
+    if (data.name_hi && data.name_hi.trim()) {
+      tagsList.push(`hi:${data.name_hi.trim()}`);
+    }
     mutation.mutate({
       ...data,
       mrp: parseFloat(data.mrp),
@@ -52,6 +55,7 @@ export default function AddProductPage() {
       is_loose: data.is_loose === true || data.is_loose === 'true' || data.is_loose === 'on' || data.is_loose === 1,
       min_quantity: data.min_quantity ? parseFloat(data.min_quantity) : undefined,
       images: validUrls,
+      tags: tagsList,
     });
   };
 
@@ -70,12 +74,21 @@ export default function AddProductPage() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Product Name (English) *</label>
               <input {...register('name', { required: 'Product name is required' })}
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                 placeholder="e.g. India Gate Basmati Rice 5kg" />
               {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Hindi Product Name / हिंदी नाम <span className="text-xs text-indigo-600 font-normal">(Optional - for Hindi storefront)</span>
+              </label>
+              <input {...register('name_hi')}
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                placeholder="जैसे: बासमती चावल, सरसों तेल, गेहूं का आटा" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>

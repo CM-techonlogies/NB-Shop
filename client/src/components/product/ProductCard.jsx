@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { useLanguageStore } from '../../store/languageStore';
 import { formatPrice, formatDiscount } from '../../utils/formatPrice';
+import { getProductName } from '../../utils/language';
 import LazyImage from '../ui/LazyImage';
 
 // ─── Unit helpers ─────────────────────────────────────────────────────────────
@@ -211,7 +212,7 @@ function LooseQtyDialog({ product, onConfirm, onClose }) {
 // ─── Main ProductCard ─────────────────────────────────────────────────────────
 export default function ProductCard({ product }) {
   const { addToCart, updateQuantity, removeFromCart, getQty } = useCart();
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
   const [showLooseDialog, setShowLooseDialog] = useState(false);
 
   const productId = product.id || product._id;
@@ -334,7 +335,7 @@ export default function ProductCard({ product }) {
         <div className="flex flex-col flex-1">
           {/* Title with min-height for uniform alignment */}
           <h3 className="text-sm font-bold text-gray-900 line-clamp-2 min-h-[2.25rem] mb-1.5 group-hover:text-primary-600 transition-colors leading-tight">
-            {product.name}
+            {getProductName(product, language)}
           </h3>
 
           {/* Rating Row */}

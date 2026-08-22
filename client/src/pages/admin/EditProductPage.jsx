@@ -9,6 +9,7 @@ import { useCategories } from '../../hooks/useProducts';
 import { productService } from '../../services/product.service';
 import Spinner from '../../components/ui/Spinner';
 import ImgBBUploader from '../../components/admin/ImgBBUploader';
+import { getHindiFromTags } from '../../utils/language';
 
 export default function EditProductPage() {
   const { id } = useParams();
@@ -35,13 +36,13 @@ export default function EditProductPage() {
     if (productData) {
       reset({
         name: productData.name || '',
+        name_hi: getHindiFromTags(productData.tags) || '',
         description: productData.description || '',
-        // m3 FIX: also try productData.category?.id for different API shapes
         category_id: productData.category_id || productData.category?.id || productData.categories?.id || '',
         brand: productData.brand || '',
-        mrp: productData.mrp || 0,
-        price: productData.price || 0,
-        stock: productData.stock || 0,
+        mrp: productData.mrp || '',
+        price: productData.price || '',
+        stock: productData.stock !== undefined ? productData.stock : 0,
         weight: productData.weight || '',
         unit: productData.unit || 'kg',
         available: productData.available !== false,
@@ -79,7 +80,7 @@ export default function EditProductPage() {
   };
 
   const mutation = useMutation({
-    mutationFn: (data) => productService.updateProduct(id, data),
+    mutationFn: ({ id, data }) => productService.updateProduct(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', id] });
@@ -91,16 +92,26 @@ export default function EditProductPage() {
 
   const onSubmit = (data) => {
     const validUrls = imageUrls.filter(u => u.trim());
+    // Filter existing hi: tags out, then append new name_hi if present
+    const existingTags = Array.isArray(productData?.tags) ? productData.tags.filter(t => typeof t === 'string' && !t.startsWith('hi:') && !t.startsWith('name_hi:')) : [];
+    if (data.name_hi && data.name_hi.trim()) {
+      existingTags.push(`hi:${data.name_hi.trim()}`);
+    }
+
     // C5 FIX: coerce ALL numeric fields to numbers before sending
     mutation.mutate({
-      ...data,
-      mrp: parseFloat(data.mrp),
-      price: parseFloat(data.price),
-      stock: parseInt(data.stock) || 0,
-      weight: data.weight ? parseFloat(data.weight) : undefined,
-      is_loose: data.is_loose === true || data.is_loose === 'true' || data.is_loose === 'on' || data.is_loose === 1,
-      min_quantity: data.min_quantity ? parseFloat(data.min_quantity) : undefined,
-      images: validUrls,
+      id,
+      data: {
+        ...data,
+        mrp: parseFloat(data.mrp),
+        price: parseFloat(data.price),
+        stock: parseInt(data.stock) || 0,
+        weight: data.weight ? parseFloat(data.weight) : undefined,
+        is_loose: data.is_loose === true || data.is_loose === 'true' || data.is_loose === 'on' || data.is_loose === 1,
+        min_quantity: data.min_quantity ? parseFloat(data.min_quantity) : undefined,
+        images: validUrls,
+        tags: existingTags,
+      }
     });
   };
 
@@ -140,12 +151,21 @@ export default function EditProductPage() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="text-lg font-bold text-gray-900 mb-4 border-b pb-2">Basic Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Product Name *</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Product Name (English) *</label>
               <input {...register('name', { required: 'Product name is required' })}
                 className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                 placeholder="e.g. India Gate Basmati Rice 5kg" />
               {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Hindi Product Name / हिंदी नाम <span className="text-xs text-indigo-600 font-normal">(Optional - for Hindi storefront)</span>
+              </label>
+              <input {...register('name_hi')}
+                className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                placeholder="जैसे: बासमती चावल, सरसों तेल, गेहूं का आटा" />
             </div>
             <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
