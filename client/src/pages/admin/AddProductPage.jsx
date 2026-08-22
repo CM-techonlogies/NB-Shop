@@ -33,7 +33,18 @@ export default function AddProductPage() {
 
   const mutation = useMutation({
     mutationFn: (data) => productService.createProduct(data),
-    onSuccess: () => {
+    onSuccess: async (res) => {
+      // Safety double-write: if isLoose toggle was ON, immediately PATCH
+      // the created product to guarantee is_loose=true is saved on backend
+      // (guards against any checkbox serialization edge cases)
+      if (isLoose) {
+        try {
+          const newProductId = res?.data?.data?.id || res?.data?.id;
+          if (newProductId) {
+            await productService.updateProduct(newProductId, { is_loose: true });
+          }
+        } catch (_) { /* non-fatal, POST already sent is_loose:true */ }
+      }
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product added successfully!');
       navigate('/admin/products');
