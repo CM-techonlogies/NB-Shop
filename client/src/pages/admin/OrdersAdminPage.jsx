@@ -35,6 +35,7 @@ const fmtDate = (d) => {
 
 export default function OrdersAdminPage() {
   const [activeTab, setActiveTab] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-orders', activeTab],
@@ -46,13 +47,56 @@ export default function OrdersAdminPage() {
 
   const orders = Array.isArray(data) ? data : (data?.data || []);
 
+  // Filter orders by search term (Invoice ID, Customer Name, Phone)
+  const filteredOrders = orders.filter(order => {
+    if (!searchTerm.trim()) return true;
+    const query = searchTerm.trim().toLowerCase();
+    
+    const orderId   = String(order.id || order._id || '').toLowerCase();
+    const invoiceId = String(order.invoice_id || order.invoiceId || orderId).toLowerCase();
+    const customer  = String(order.users?.name || order.customerName || order.address?.name || '').toLowerCase();
+    const phone     = String(order.users?.phone || order.address?.phone || order.phone || '').toLowerCase();
+
+    return (
+      invoiceId.includes(query) ||
+      customer.includes(query) ||
+      phone.includes(query) ||
+      orderId.includes(query)
+    );
+  });
+
   return (
     <div className="p-6 max-w-7xl mx-auto animate-fadeIn">
       <Helmet><title>Manage Orders - {STORE_NAME} Admin</title></Helmet>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-        <p className="text-sm text-gray-500">View and manage customer orders</p>
+      {/* Header & Search Bar */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
+          <p className="text-sm text-gray-500">View and manage customer orders</p>
+        </div>
+
+        {/* Search Input Box */}
+        <div className="relative min-w-[280px] md:min-w-[360px]">
+          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 text-sm">
+            🔍
+          </span>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search by Invoice # (e.g. 10051), Customer..."
+            className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all shadow-xs"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 font-bold text-xs"
+            >
+              ✕
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
@@ -92,9 +136,21 @@ export default function OrdersAdminPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 text-sm">
-                {orders.length === 0 ? (
-                  <tr><td colSpan="6" className="text-center py-10 text-gray-400">No orders found.</td></tr>
-                ) : orders.map(order => {
+                {filteredOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan="6" className="text-center py-12 text-gray-400">
+                      {searchTerm.trim() ? (
+                        <div>
+                          <span className="text-3xl block mb-2">🔍</span>
+                          <p className="font-semibold text-gray-600">No orders matching "{searchTerm}"</p>
+                          <p className="text-xs text-gray-400 mt-1">Try searching by Invoice number, customer name, or phone</p>
+                        </div>
+                      ) : (
+                        'No orders found.'
+                      )}
+                    </td>
+                  </tr>
+                ) : filteredOrders.map(order => {
                   const orderId   = order.id || order._id;
                   const invoiceId = order.invoice_id || order.invoiceId || orderId?.substring(0, 8).toUpperCase();
                   const customer  = order.users?.name || order.customerName || '—';
