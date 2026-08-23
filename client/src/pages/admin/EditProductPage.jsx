@@ -6,7 +6,7 @@ import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { STORE_NAME } from '../../constants';
 import { useCategories } from '../../hooks/useProducts';
-import { productService } from '../../services/product.service';
+import { productService, supabasePatchProduct } from '../../services/product.service';
 import Spinner from '../../components/ui/Spinner';
 import ImgBBUploader from '../../components/admin/ImgBBUploader';
 import { getHindiFromTags } from '../../utils/language';
@@ -83,7 +83,11 @@ export default function EditProductPage() {
 
   const mutation = useMutation({
     mutationFn: ({ id, data }) => productService.updateProduct(id, data),
-    onSuccess: () => {
+    onSuccess: async (_, variables) => {
+      // GUARANTEED WRITE: directly patch is_loose to Supabase REST, bypassing
+      // Render backend. Ensures is_loose is always correct regardless of which
+      // server version is running on Render.
+      await supabasePatchProduct(variables.id, { is_loose: Boolean(isLoose) });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['product', id] });
       toast.success('Product updated successfully!');

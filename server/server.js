@@ -59,8 +59,13 @@ app.use('/api/offers', offerRoutes); app.use('/offers', offerRoutes);
 app.use('/api/settings', settingRoutes); app.use('/settings', settingRoutes);
 app.use('/api/admin', adminRoutes); app.use('/admin', adminRoutes);
 
-// Health check
-app.get(['/api/health', '/health'], (req, res) => res.json({ status: 'ok', timestamp: new Date().toISOString() }));
+// Health check — version stamp helps verify which code is deployed on Render
+const BUILD_VERSION = 'v2026-08-23-is_loose-fix';
+app.get(['/api/health', '/health'], (req, res) => res.json({
+  status: 'ok',
+  version: BUILD_VERSION,
+  timestamp: new Date().toISOString()
+}));
 
 // 404 handler
 app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found` }));

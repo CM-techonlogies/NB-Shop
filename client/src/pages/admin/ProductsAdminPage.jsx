@@ -4,7 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { STORE_NAME } from '../../constants';
 import { MagnifyingGlassIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productService } from '../../services/product.service';
+import { productService, supabasePatchProduct } from '../../services/product.service';
 import { useCategories } from '../../hooks/useProducts';
 import toast from 'react-hot-toast';
 
@@ -44,7 +44,11 @@ export default function ProductsAdminPage() {
   });
 
   const toggleLooseMutation = useMutation({
-    mutationFn: ({ id, is_loose }) => productService.toggleLoose(id, is_loose),
+    mutationFn: async ({ id, is_loose }) => {
+      // GUARANTEED WRITE: directly patch is_loose via Supabase REST, bypassing
+      // Render backend. This works even if Render has not redeployed latest code.
+      await supabasePatchProduct(id, { is_loose: !is_loose });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });

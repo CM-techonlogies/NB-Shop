@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { STORE_NAME } from '../../constants';
 import { useCategories } from '../../hooks/useProducts';
-import { productService } from '../../services/product.service';
+import { productService, supabasePatchProduct } from '../../services/product.service';
 import ImgBBUploader from '../../components/admin/ImgBBUploader';
 
 export default function AddProductPage() {
@@ -34,16 +34,12 @@ export default function AddProductPage() {
   const mutation = useMutation({
     mutationFn: (data) => productService.createProduct(data),
     onSuccess: async (res) => {
-      // Safety double-write: if isLoose toggle was ON, immediately PATCH
-      // the created product to guarantee is_loose=true is saved on backend
-      // (guards against any checkbox serialization edge cases)
-      if (isLoose) {
-        try {
-          const newProductId = res?.data?.data?.id || res?.data?.id;
-          if (newProductId) {
-            await productService.updateProduct(newProductId, { is_loose: true });
-          }
-        } catch (_) { /* non-fatal, POST already sent is_loose:true */ }
+      // GUARANTEED WRITE: always patch is_loose directly to Supabase REST.
+      // This bypasses the Render backend entirely so is_loose is always saved
+      // correctly regardless of which server version is deployed on Render.
+      const newProductId = res?.data?.data?.id || res?.data?.id;
+      if (newProductId) {
+        await supabasePatchProduct(newProductId, { is_loose: Boolean(isLoose) });
       }
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product added successfully!');
