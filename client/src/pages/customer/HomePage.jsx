@@ -48,6 +48,7 @@ const CATEGORY_EMOJIS = {
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState('');
   const { t, language } = useLanguageStore();
 
   const { data: dbBanners } = useBanners();
