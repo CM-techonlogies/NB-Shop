@@ -29,7 +29,7 @@ export default function ProductsPage() {
   // Search params state
   const initialSearch = searchParams.get('search') || '';
   const initialCategory = searchParams.get('category') || '';
-  const initialSort = searchParams.get('sort') || '-createdAt';
+  const initialSort = searchParams.get('sort') || '';
   const initialDiscountOnly = searchParams.get('discount') === 'true';
 
   // State management
@@ -56,7 +56,7 @@ export default function ProductsPage() {
   useEffect(() => {
     const urlSearch = searchParams.get('search') || '';
     const urlCategory = searchParams.get('category') || '';
-    const urlSort = searchParams.get('sort') || '-createdAt';
+    const urlSort = searchParams.get('sort') || '';
     setSearch(urlSearch);
     setCategory(urlCategory);
     setSort(urlSort);
@@ -71,10 +71,11 @@ export default function ProductsPage() {
   const { data: productsData, isLoading } = useProducts({
     search: search || undefined,
     category: category || undefined,
-    sort: sort === 'trending' || sort === 'featured' || sort === 'rating' ? undefined : sort,
+    sort: (sort === 'trending' || sort === 'featured' || sort === 'rating' || !sort) ? undefined : sort,
     trending: sort === 'trending' ? 'true' : undefined,
     featured: sort === 'featured' ? 'true' : undefined,
-    page,
+    limit: 100,  // Show all products — no pagination
+    page: 1,
   });
 
   const rawProducts = productsData?.data || [];
@@ -169,7 +170,7 @@ export default function ProductsPage() {
     setCategory('');
     setSubCategory('');
     setBrand('');
-    setSort('-createdAt');
+    setSort('');
     setMaxPrice(5000);
     setSelectedDiscounts([]);
     setSelectedRatings([]);
