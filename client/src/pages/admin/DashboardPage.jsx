@@ -6,7 +6,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   PieChart, Pie, Cell, ResponsiveContainer
 } from 'recharts';
-import { adminService } from '../../services/admin.service';
+import { supaOrders, supaCustomers, supaProducts } from '../../services/supabaseAdmin';
 import { STORE_NAME } from '../../constants';
 import { formatPrice } from '../../utils/formatPrice';
 import Spinner from '../../components/ui/Spinner';
@@ -14,10 +14,29 @@ import Spinner from '../../components/ui/Spinner';
 const PIE_COLORS = ['#10B981', '#F59E0B', '#3B82F6', '#EF4444', '#8B5CF6', '#EC4899'];
 
 export default function DashboardPage() {
+  // ── Fetch directly from Supabase (bypasses Render auth) ──────────────────
   const { data: statsData, isLoading, isError, refetch } = useQuery({
     queryKey: ['admin-dashboard'],
-    queryFn: () => adminService.getDashboardStats().then(r => r.data?.data || r.data || {}),
-    refetchInterval: 30000, // Auto refresh stats every 30 seconds
+    queryFn: async () => {
+      const [orderStats, customers, products] = await Promise.all([
+        supaOrders.getStats(),
+        supaCustomers.getAll(),
+        supaProducts.getAll(),
+      ]);
+      // Build today's stats
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const allOrders = await supaOrders.getAll();
+      const todayOrders = allOrders.filter(o => new Date(o.created_at) >= today);
+      return {
+        ...orderStats,
+        todaySales: todayOrders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0),
+        todayOrders: todayOrders.length,
+        totalCustomers: customers.length,
+        totalProducts: products.length,
+        weeklyOrders: allOrders,  // last 7 days computed in component
+      };
+    },
+    refetchInterval: 30000,
   });
 
   const rawStats = statsData || {};

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { orderService } from '../../services/order.service';
+import { supaOrders } from '../../services/supabaseAdmin';
 import { STORE_NAME } from '../../constants';
 import Spinner from '../../components/ui/Spinner';
 
@@ -37,15 +37,14 @@ export default function OrdersAdminPage() {
   const [activeTab, setActiveTab] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // ── Fetch directly from Supabase (bypasses Render auth) ──────────────────
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-orders', activeTab],
-    queryFn: () =>
-      orderService.getAllOrders({ status: activeTab || undefined })
-        .then(r => r.data?.data || r.data || []),
+    queryFn: () => supaOrders.getAll(activeTab || undefined),
     staleTime: 60 * 1000,
   });
 
-  const orders = Array.isArray(data) ? data : (data?.data || []);
+  const orders = Array.isArray(data) ? data : [];
 
   // Filter orders by search term (Invoice ID, Customer Name, Phone)
   const filteredOrders = orders.filter(order => {

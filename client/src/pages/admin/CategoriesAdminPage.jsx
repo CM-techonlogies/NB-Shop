@@ -3,7 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { STORE_NAME } from '../../constants';
 import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { categoryService } from '../../services/category.service';
+import { supaCategories } from '../../services/supabaseAdmin';
 import toast from 'react-hot-toast';
 
 import { getCategoryName } from '../../constants/translations';
@@ -16,42 +16,44 @@ export default function CategoriesAdminPage() {
   const [editCategory, setEditCategory] = useState(null); // null = add mode
   const [form, setForm] = useState(EMPTY_FORM);
 
+  // ── Fetch directly from Supabase (bypasses Render auth) ──────────────────
   const { data, isLoading } = useQuery({
     queryKey: ['categories-admin'],
-    queryFn: () => categoryService.getAllAdmin().then(r => r.data?.data || r.data || []),
+    queryFn: () => supaCategories.getAll(),
   });
-  const categories = data || [];
+  const categories = Array.isArray(data) ? data : [];
 
   const createMutation = useMutation({
-    mutationFn: (d) => categoryService.createCategory(d),
+    mutationFn: (d) => supaCategories.create(d),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success('Category created!');
       closeModal();
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed to create category'),
+    onError: (e) => toast.error(e?.message || 'Failed to create category'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => categoryService.updateCategory(id, data),
+    mutationFn: ({ id, data }) => supaCategories.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
       toast.success('Category updated!');
       closeModal();
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed to update category'),
+    onError: (e) => toast.error(e?.message || 'Failed to update category'),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => categoryService.deleteCategory(id),
+    mutationFn: (id) => supaCategories.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
       toast.success('Category deleted!');
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Cannot delete: products may exist'),
+    onError: (e) => toast.error(e?.message || 'Cannot delete: products may exist'),
   });
+
 
   const openAdd = () => { setEditCategory(null); setForm(EMPTY_FORM); setIsModalOpen(true); };
   const openEdit = (cat) => {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { adminService } from '../../services/admin.service';
+import { supaBanners } from '../../services/supabaseAdmin';
 import { STORE_NAME } from '../../constants';
 import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import Spinner from '../../components/ui/Spinner';
@@ -23,16 +23,16 @@ export default function BannersAdminPage() {
   const [editBanner, setEditBanner] = useState(null); // null = Add Mode
   const [form, setForm] = useState(EMPTY_FORM);
 
-  // Fetch all banners (including inactive)
+  // ── Fetch directly from Supabase (bypasses Render auth) ──────────────────
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-banners'],
-    queryFn: () => adminService.getBanners().then(r => r.data?.data || r.data || []),
+    queryFn: () => supaBanners.getAll(),
   });
   const banners = Array.isArray(data) ? data : [];
 
   // Create Banner Mutation
   const createMutation = useMutation({
-    mutationFn: (d) => adminService.createBanner(d),
+    mutationFn: (d) => supaBanners.create(d),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
       queryClient.invalidateQueries({ queryKey: ['public-banners'] });
@@ -40,13 +40,13 @@ export default function BannersAdminPage() {
       closeModal();
     },
     onError: (err) => {
-      toast.error(err.response?.data?.message || 'Failed to create banner');
+      toast.error(err?.message || 'Failed to create banner');
     },
   });
 
   // Update Banner Mutation
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => adminService.updateBanner(id, data),
+    mutationFn: ({ id, data }) => supaBanners.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
       queryClient.invalidateQueries({ queryKey: ['public-banners'] });
@@ -54,13 +54,13 @@ export default function BannersAdminPage() {
       closeModal();
     },
     onError: (err) => {
-      toast.error(err.response?.data?.message || 'Failed to update banner');
+      toast.error(err?.message || 'Failed to update banner');
     },
   });
 
   // Delete Banner Mutation
   const deleteMutation = useMutation({
-    mutationFn: (id) => adminService.deleteBanner(id),
+    mutationFn: (id) => supaBanners.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-banners'] });
       queryClient.invalidateQueries({ queryKey: ['public-banners'] });
@@ -68,6 +68,7 @@ export default function BannersAdminPage() {
     },
     onError: () => toast.error('Failed to delete banner'),
   });
+
 
   const openAddModal = () => {
     setEditBanner(null);
