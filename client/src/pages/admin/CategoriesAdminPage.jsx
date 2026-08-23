@@ -6,7 +6,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { categoryService } from '../../services/category.service';
 import toast from 'react-hot-toast';
 
-const EMPTY_FORM = { name: '', description: '', image_url: '', sort_order: 0, visible: true };
+import { getCategoryName } from '../../constants/translations';
+
+const EMPTY_FORM = { name: '', name_hi: '', description: '', image_url: '', sort_order: 0, visible: true };
 
 export default function CategoriesAdminPage() {
   const queryClient = useQueryClient();
@@ -54,17 +56,38 @@ export default function CategoriesAdminPage() {
   const openAdd = () => { setEditCategory(null); setForm(EMPTY_FORM); setIsModalOpen(true); };
   const openEdit = (cat) => {
     setEditCategory(cat);
-    setForm({ name: cat.name, description: cat.description || '', image_url: cat.image_url || '', sort_order: cat.sort_order || 0, visible: cat.visible });
+    const hiMatch = (cat.description || '').match(/hi:\s*([^|;\n\]]+)/i);
+    const name_hi = hiMatch ? hiMatch[1].trim() : '';
+    const cleanDesc = (cat.description || '').replace(/hi:\s*[^|;\n\]]+/gi, '').trim();
+    setForm({
+      name: cat.name,
+      name_hi,
+      description: cleanDesc,
+      image_url: cat.image_url || '',
+      sort_order: cat.sort_order || 0,
+      visible: cat.visible
+    });
     setIsModalOpen(true);
   };
   const closeModal = () => { setIsModalOpen(false); setEditCategory(null); setForm(EMPTY_FORM); };
 
   const handleSave = () => {
     if (!form.name.trim()) return toast.error('Category name is required');
+    let finalDescription = form.description ? form.description.trim() : '';
+    if (form.name_hi && form.name_hi.trim()) {
+      finalDescription = `${finalDescription} hi:${form.name_hi.trim()}`.trim();
+    }
+    const payload = {
+      name: form.name.trim(),
+      description: finalDescription,
+      image_url: form.image_url,
+      sort_order: form.sort_order,
+      visible: form.visible
+    };
     if (editCategory) {
-      updateMutation.mutate({ id: editCategory.id, data: form });
+      updateMutation.mutate({ id: editCategory.id, data: payload });
     } else {
-      createMutation.mutate(form);
+      createMutation.mutate(payload);
     }
   };
 
@@ -117,7 +140,16 @@ export default function CategoriesAdminPage() {
                       : '🛍️'}
                   </div>
                 </td>
-                <td className="px-6 py-4 font-medium text-gray-900">{cat.name}</td>
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-gray-900">{cat.name}</span>
+                    {getCategoryName(cat, 'hi') !== cat.name && (
+                      <span className="text-xs bg-orange-50 text-primary-600 font-semibold px-2 py-0.5 rounded-full border border-orange-100">
+                        {getCategoryName(cat, 'hi')}
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td className="px-6 py-4 text-gray-600">{cat.sort_order || 0}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded text-xs font-bold ${cat.visible ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
@@ -147,10 +179,19 @@ export default function CategoriesAdminPage() {
             <h2 className="text-xl font-bold mb-5">{editCategory ? 'Edit Category' : 'Add Category'}</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category Name (English) *</label>
                 <input className="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
                   placeholder="e.g. Dairy & Eggs"
                   value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Hindi Name (हिन्दी नाम) <span className="text-gray-400 font-normal text-xs">(Optional)</span>
+                </label>
+                <input className="w-full p-2.5 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-orange-50/40 border-orange-200"
+                  placeholder="e.g. दूध और अंडे"
+                  value={form.name_hi} onChange={e => setForm({ ...form, name_hi: e.target.value })} />
+                <p className="text-[11px] text-gray-400 mt-1">If left empty, common categories are auto-translated.</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

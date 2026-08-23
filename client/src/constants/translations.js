@@ -1,57 +1,156 @@
 // ── Category Hindi Name Mapping ────────────────────────────────────────────
-// Maps English category names (from DB) → Hindi names
-// Add new categories here as they are created in admin panel
+// Built-in dictionary for standard kirana categories
 export const CATEGORY_HINDI_MAP = {
-  // Database categories
-  "oil's":       "तेल",
-  "oils":        "तेल",
-  "oil":         "तेल",
-  "vegetables":  "सब्ज़ियाँ",
-  "vegetable":   "सब्ज़ियाँ",
-  "grains":      "अनाज",
-  "grain":       "अनाज",
-  "bottles":     "बोतलें",
-  "bottle":      "बोतलें",
-  "detergents":  "डिटर्जेंट",
-  "detergent":   "डिटर्जेंट",
-  "soft drink":  "कोल्ड ड्रिंक",
-  "soft drinks": "कोल्ड ड्रिंक",
-  "study":       "स्टेशनरी",
-  "stationery":  "स्टेशनरी",
+  // Existing store categories
+  "oil's":            "तेल",
+  "oils":             "तेल",
+  "oil":              "तेल",
+  "vegetables":       "सब्ज़ियाँ",
+  "vegetable":        "सब्ज़ियाँ",
+  "grains":           "अनाज",
+  "grain":            "अनाज",
+  "bottles":          "बोतलें",
+  "bottle":           "बोतलें",
+  "detergents":       "डिटर्जेंट",
+  "detergent":        "डिटर्जेंट",
+  "soft drink":       "कोल्ड ड्रिंक",
+  "soft drinks":      "कोल्ड ड्रिंक",
+  "study":            "स्टेशनरी",
+  "stationery":       "स्टेशनरी",
 
-  // Sample & Standard Kirana Categories
-  "rice & atta":     "चावल और आटा",
-  "rice and atta":   "चावल और आटा",
-  "oil & ghee":      "तेल और घी",
-  "oil and ghee":    "तेल और घी",
-  "spices":          "मसाले",
-  "spice":           "मसाले",
-  "pulses":          "दालें",
-  "pulse":           "दालें",
-  "tea & coffee":    "चाय और कॉफ़ी",
-  "tea and coffee":  "चाय और कॉफ़ी",
-  "cold drinks":     "कोल्ड ड्रिंक्स",
-  "snacks":          "नमकीन और स्नैक्स",
-  "snack":           "नमकीन और स्नैक्स",
-  "cleaning":        "सफ़ाई का सामान",
-  "personal care":   "पर्सनल केयर",
-  "dairy":           "डेयरी उत्पाद",
-  "fruits":          "फल",
-  "dry fruits":      "सूखे मेवे (ड्राई फ्रूट्स)",
-  "bakery":          "बेकरी",
-  "household":       "घरेलू सामान",
+  // Staples & Essentials
+  "rice & atta":      "चावल और आटा",
+  "rice and atta":    "चावल और आटा",
+  "rice":             "चावल",
+  "atta":             "आटा",
+  "flour":            "आटा / मैदा",
+  "oil & ghee":       "तेल और घी",
+  "oil and ghee":     "तेल और घी",
+  "ghee":             "घी",
+  "spices":           "मसाले",
+  "spice":            "मसाले",
+  "masala":           "मसाले",
+  "masalas":          "मसाले",
+  "pulses":           "दालें",
+  "pulse":            "दालें",
+  "dal":              "दालें",
+  "dals":             "दालें",
+  "sugar":            "चीनी / शक्कर",
+  "salt":             "नमक",
+  "jaggery":          "गुड़",
+
+  // Beverages & Dairy
+  "tea & coffee":     "चाय और कॉफ़ी",
+  "tea and coffee":   "चाय और कॉफ़ी",
+  "tea":              "चाय",
+  "coffee":           "कॉफ़ी",
+  "cold drinks":      "कोल्ड ड्रिंक्स",
+  "cold drink":       "कोल्ड ड्रिंक्स",
+  "beverages":        "पेय पदार्थ",
+  "juices":           "जूस और शरबत",
+  "juice":            "जूस",
+  "dairy":            "डेयरी उत्पाद",
+  "milk":             "दूध",
+  "paneer":           "पनीर",
+  "butter":           "मक्खन",
+  "cheese":           "चीज़",
+  "curd":             "दही",
+
+  // Snacks & Bakery
+  "snacks":           "नमकीन और स्नैक्स",
+  "snack":            "नमकीन और स्नैक्स",
+  "namkeen":          "नमकीन",
+  "biscuits":         "बिस्कुट और कुकीज़",
+  "biscuit":          "बिस्कुट",
+  "cookies":          "कुकीज़",
+  "chips":            "चिप्स और कुरकुरे",
+  "bakery":           "बेकरी",
+  "bread":            "ब्रेड",
+  "sweets":           "मिठाइयाँ",
+  "sweet":            "मिठाइयाँ",
+  "chocolates":       "चॉकलेट",
+  "chocolate":        "चॉकलेट",
+  "noodles":          "नूडल्स और पास्ता",
+  "pasta":            "पास्ता",
+
+  // Fruits, Vegetables & Dry Fruits
+  "fruits":           "फल",
+  "fruit":            "फल",
+  "dry fruits":       "सूखे मेवे (ड्राई फ्रूट्स)",
+  "dry fruit":        "सूखे मेवे",
+  "nuts":             "मेवे",
+
+  // Personal Care & Hygiene
+  "personal care":    "पर्सनल केयर",
+  "soaps":            "साबुन",
+  "soap":             "साबुन",
+  "shampoo":          "शैम्पू",
+  "hair care":        "बालों की देखभाल",
+  "skin care":        "त्वचा की देखभाल",
+  "oral care":        "दांतों की देखभाल",
+  "toothpaste":       "टूथपेस्ट",
+
+  // Cleaning & Household
+  "cleaning":         "सफ़ाई का सामान",
+  "cleaning & household": "सफ़ाई और घरेलू",
+  "dishwash":         "बर्तन साफ़ करने का सामान",
+  "household":        "घरेलू सामान",
+  "pooja":            "पूजा सामग्री",
+  "pooja samagri":    "पूजा सामग्री",
+  "pooja items":      "पूजा सामग्री",
+  "agarbatti":        "अगरबत्ती और धूप",
+  "festive":          "त्योहार विशेषांक",
+  "kitchen":          "रसोई का सामान",
 };
 
 /**
  * Returns category name in current language.
- * Falls back to English name if no Hindi mapping found.
- * @param {string} name - English category name from DB
+ * Checks:
+ * 1. Custom Hindi tag in description: hi:हिन्दी नाम
+ * 2. Extended CATEGORY_HINDI_MAP dictionary
+ * 3. Native Devanagari Hindi characters
+ * 4. Falls back to original name
+ *
+ * @param {string|object} categoryOrName - Category object or name string
  * @param {string} language - 'en' or 'hi'
+ * @param {string} [optionalDesc] - Optional description string
  */
-export const getCategoryName = (name, language) => {
-  if (!name) return '';
+export const getCategoryName = (categoryOrName, language, optionalDesc = '') => {
+  if (!categoryOrName) return '';
+  
+  let name = '';
+  let desc = '';
+  if (typeof categoryOrName === 'object') {
+    name = categoryOrName.name || '';
+    desc = categoryOrName.description || optionalDesc || '';
+  } else {
+    name = String(categoryOrName);
+    desc = optionalDesc || '';
+  }
+
   if (language !== 'hi') return name;
-  return CATEGORY_HINDI_MAP[name.trim().toLowerCase()] || name;
+
+  // 1. Check if description has custom hi: tag (e.g. "hi:पूजा सामग्री")
+  if (desc && typeof desc === 'string') {
+    const hiMatch = desc.match(/hi:\s*([^|;\n\]]+)/i);
+    if (hiMatch && hiMatch[1]?.trim()) {
+      return hiMatch[1].trim();
+    }
+  }
+
+  // 2. Check built-in CATEGORY_HINDI_MAP dictionary
+  const key = name.trim().toLowerCase();
+  if (CATEGORY_HINDI_MAP[key]) {
+    return CATEGORY_HINDI_MAP[key];
+  }
+
+  // 3. If name is already in Hindi/Devanagari, return as is
+  if (/[\u0900-\u097F]/.test(name)) {
+    return name;
+  }
+
+  // 4. Default fallback to original name
+  return name;
 };
 
 export const TRANSLATIONS = {
