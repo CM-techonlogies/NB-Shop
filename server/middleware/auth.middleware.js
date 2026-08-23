@@ -17,28 +17,33 @@ const protect = async (req, res, next) => {
       .eq('id', auth.userId)
       .single();
 
-    // If user doesn't exist yet (webhook may not have fired), auto-create them
+    // If user doesn't exist yet, create them safely
     if (!user || error?.code === 'PGRST116') {
-      // Get user details from Clerk
-      const { clerkClient } = require('@clerk/express');
-      let clerkUser = null;
-      try {
-        clerkUser = await clerkClient.users.getUser(auth.userId);
-      } catch (_) {}
+      let name = 'Customer';
+      let email = null;
+      let phone = null;
 
-      const name = clerkUser
-        ? [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || 'User'
-        : 'User';
-      const email = clerkUser?.emailAddresses?.[0]?.emailAddress || null;
-      const phone = clerkUser?.phoneNumbers?.[0]?.phoneNumber?.replace('+91', '') || null;
+      try {
+        const { clerkClient } = require('@clerk/express');
+        if (clerkClient && clerkClient.users) {
+          const clerkUser = await clerkClient.users.getUser(auth.userId);
+          if (clerkUser) {
+            name = [clerkUser.firstName, clerkUser.lastName].filter(Boolean).join(' ') || 'Customer';
+            email = clerkUser.emailAddresses?.[0]?.emailAddress || null;
+            phone = clerkUser.phoneNumbers?.[0]?.phoneNumber?.replace('+91', '') || null;
+          }
+        }
+      } catch (clerkErr) {
+        console.warn('Could not fetch user details from Clerk:', clerkErr.message);
+      }
 
       const { data: newUser, error: upsertErr } = await supabase
         .from('users')
         .upsert({
           id: auth.userId,
-          name,
-          email,
-          phone,
+          name: name || 'Customer',
+          email: email || null,
+          phone: phone || null,
           role: 'customer',
           is_active: true,
           updated_at: new Date().toISOString(),
@@ -46,10 +51,19 @@ const protect = async (req, res, next) => {
         .select()
         .single();
 
-      if (upsertErr || !newUser) {
-        return next(new ApiError(401, 'Could not sync user. Please sign in again.'));
+      if (upsertErr) {
+        console.warn('User upsert fallback:', upsertErr.message);
+        user = {
+          id: auth.userId,
+          name: name || 'Customer',
+          email: email || null,
+          phone: phone || null,
+          role: 'customer',
+          is_active: true
+        };
+      } else {
+        user = newUser;
       }
-      user = newUser;
     }
 
     if (!user.is_active) {
