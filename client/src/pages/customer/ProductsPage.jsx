@@ -315,17 +315,17 @@ export default function ProductsPage() {
 
               {/* Sub Category */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Sub Category</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">{language === 'hi' ? 'उप-श्रेणी (Sub Category)' : 'Sub Category'}</label>
                 <select
                   value={subCategory}
                   onChange={(e) => setSubCategory(e.target.value)}
                   className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="">All Sub Categories</option>
-                  <option value="groceries">Groceries & Staples</option>
-                  <option value="beverages">Beverages & Soft Drinks</option>
-                  <option value="personal">Personal Care & Hygiene</option>
-                  <option value="snacks">Snacks & Packaged Foods</option>
+                  <option value="">{language === 'hi' ? 'सभी उप-श्रेणियाँ' : 'All Sub Categories'}</option>
+                  <option value="groceries">{language === 'hi' ? 'किराना और अनाज' : 'Groceries & Staples'}</option>
+                  <option value="beverages">{language === 'hi' ? 'कोल्ड ड्रिंक्स और पेय' : 'Beverages & Soft Drinks'}</option>
+                  <option value="personal">{language === 'hi' ? 'पर्सनल केयर' : 'Personal Care & Hygiene'}</option>
+                  <option value="snacks">{language === 'hi' ? 'नमकीन और स्नैक्स' : 'Snacks & Packaged Foods'}</option>
                 </select>
               </div>
 

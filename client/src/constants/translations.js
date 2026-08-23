@@ -2,16 +2,44 @@
 // Maps English category names (from DB) → Hindi names
 // Add new categories here as they are created in admin panel
 export const CATEGORY_HINDI_MAP = {
+  // Database categories
   "oil's":       "तेल",
   "oils":        "तेल",
   "oil":         "तेल",
   "vegetables":  "सब्ज़ियाँ",
+  "vegetable":   "सब्ज़ियाँ",
   "grains":      "अनाज",
+  "grain":       "अनाज",
   "bottles":     "बोतलें",
+  "bottle":      "बोतलें",
   "detergents":  "डिटर्जेंट",
+  "detergent":   "डिटर्जेंट",
   "soft drink":  "कोल्ड ड्रिंक",
   "soft drinks": "कोल्ड ड्रिंक",
   "study":       "स्टेशनरी",
+  "stationery":  "स्टेशनरी",
+
+  // Sample & Standard Kirana Categories
+  "rice & atta":     "चावल और आटा",
+  "rice and atta":   "चावल और आटा",
+  "oil & ghee":      "तेल और घी",
+  "oil and ghee":    "तेल और घी",
+  "spices":          "मसाले",
+  "spice":           "मसाले",
+  "pulses":          "दालें",
+  "pulse":           "दालें",
+  "tea & coffee":    "चाय और कॉफ़ी",
+  "tea and coffee":  "चाय और कॉफ़ी",
+  "cold drinks":     "कोल्ड ड्रिंक्स",
+  "snacks":          "नमकीन और स्नैक्स",
+  "snack":           "नमकीन और स्नैक्स",
+  "cleaning":        "सफ़ाई का सामान",
+  "personal care":   "पर्सनल केयर",
+  "dairy":           "डेयरी उत्पाद",
+  "fruits":          "फल",
+  "dry fruits":      "सूखे मेवे (ड्राई फ्रूट्स)",
+  "bakery":          "बेकरी",
+  "household":       "घरेलू सामान",
 };
 
 /**
