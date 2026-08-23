@@ -13,6 +13,7 @@ import { StarIcon } from '@heroicons/react/24/solid';
 import Spinner from '../../components/ui/Spinner';
 import { useLanguageStore } from '../../store/languageStore';
 import { getProductName, getProductDescription } from '../../utils/language';
+import { getCategoryName } from '../../constants/translations';
 import LooseDetailSelector from '../../components/product/LooseDetailSelector';
 
 const PLACEHOLDER = 'https://via.placeholder.com/400x400?text=No+Image';
@@ -187,7 +188,7 @@ export default function ProductDetailPage() {
                   to={`/category/${product.categories?.slug}`}
                   className="text-xs font-semibold text-primary-500 uppercase tracking-wider mb-1 inline-block hover:underline"
                 >
-                  {product.categories.name}
+                  {getCategoryName(product.categories.name, language)}
                 </Link>
               )}
 

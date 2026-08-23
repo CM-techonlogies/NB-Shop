@@ -5,15 +5,19 @@ import { useCategories, useProducts } from '../../hooks/useProducts';
 import ProductGrid from '../../components/product/ProductGrid';
 import { STORE_NAME } from '../../constants';
 import Spinner from '../../components/ui/Spinner';
+import { useLanguageStore } from '../../store/languageStore';
+import { getCategoryName } from '../../constants/translations';
 
 export default function CategoryPage() {
   const { slug } = useParams();
+  const { t, language } = useLanguageStore();
   const { data: categoriesData, isLoading: catLoading } = useCategories();
   
   const categories = Array.isArray(categoriesData) ? categoriesData : (categoriesData?.data || []);
   const category = categories.find(c => c.slug === slug);
   const categoryId = category?.id || category?._id;
   const catImg = category?.image_url || category?.image?.url || (typeof category?.image === 'string' ? category.image : null);
+  const catDisplayName = category ? getCategoryName(category.name, language) : '';
   
   const { data: productsData, isLoading: prodLoading } = useProducts({ 
     category: categoryId,
@@ -26,15 +30,15 @@ export default function CategoryPage() {
 
   if (!category) return (
     <div className="text-center py-20">
-      <h2 className="text-2xl font-bold mb-4">Category not found</h2>
-      <Link to="/categories" className="text-primary-500 hover:underline">← All Categories</Link>
+      <h2 className="text-2xl font-bold mb-4">{language === 'hi' ? 'कैटेगरी नहीं मिली' : 'Category not found'}</h2>
+      <Link to="/categories" className="text-primary-500 hover:underline">← {language === 'hi' ? 'सभी कैटेगरी' : 'All Categories'}</Link>
     </div>
   );
 
   return (
     <div className="animate-fadeIn pb-10">
       <Helmet>
-        <title>{category.name} - {STORE_NAME}</title>
+        <title>{catDisplayName} - {STORE_NAME}</title>
       </Helmet>
 
       {/* Hero Banner */}
@@ -42,11 +46,13 @@ export default function CategoryPage() {
         <div className="absolute right-0 top-0 w-64 h-64 bg-white opacity-10 rounded-full -translate-y-1/2 translate-x-1/3"></div>
         <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row items-center gap-6">
           <div className="w-24 h-24 bg-white/20 backdrop-blur-md rounded-full p-2 flex items-center justify-center text-4xl shadow-inner border border-white/30 overflow-hidden">
-            {catImg ? <img src={catImg} alt={category.name} className="w-full h-full rounded-full object-cover" /> : '🛍️'}
+            {catImg ? <img src={catImg} alt={catDisplayName} className="w-full h-full rounded-full object-cover" /> : '🛍️'}
           </div>
           <div className="text-center md:text-left">
-            <h1 className="text-3xl md:text-5xl font-black font-heading mb-2">{category.name}</h1>
-            <p className="text-white/80 text-lg">{category.description || `Explore our fresh collection of ${category.name.toLowerCase()}`}</p>
+            <h1 className="text-3xl md:text-5xl font-black font-heading mb-2">{catDisplayName}</h1>
+            <p className="text-white/80 text-lg">
+              {category.description || (language === 'hi' ? `${catDisplayName} का ताज़ा और बेहतरीन कलेक्शन` : `Explore our fresh collection of ${category.name.toLowerCase()}`)}
+            </p>
           </div>
         </div>
       </div>

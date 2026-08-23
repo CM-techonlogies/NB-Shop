@@ -1,3 +1,31 @@
+// ── Category Hindi Name Mapping ────────────────────────────────────────────
+// Maps English category names (from DB) → Hindi names
+// Add new categories here as they are created in admin panel
+export const CATEGORY_HINDI_MAP = {
+  "oil's":       "तेल",
+  "oils":        "तेल",
+  "oil":         "तेल",
+  "vegetables":  "सब्ज़ियाँ",
+  "grains":      "अनाज",
+  "bottles":     "बोतलें",
+  "detergents":  "डिटर्जेंट",
+  "soft drink":  "कोल्ड ड्रिंक",
+  "soft drinks": "कोल्ड ड्रिंक",
+  "study":       "स्टेशनरी",
+};
+
+/**
+ * Returns category name in current language.
+ * Falls back to English name if no Hindi mapping found.
+ * @param {string} name - English category name from DB
+ * @param {string} language - 'en' or 'hi'
+ */
+export const getCategoryName = (name, language) => {
+  if (!name) return '';
+  if (language !== 'hi') return name;
+  return CATEGORY_HINDI_MAP[name.trim().toLowerCase()] || name;
+};
+
 export const TRANSLATIONS = {
   en: {
     // Navigation

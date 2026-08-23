@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useProductsByCategory } from '../../hooks/useProducts';
 import ProductCard from '../product/ProductCard';
 import { SkeletonProductCard } from '../ui/Skeleton';
+import { useLanguageStore } from '../../store/languageStore';
+import { getCategoryName } from '../../constants/translations';
 
 const CATEGORY_EMOJIS = {
   'Rice & Atta': '🌾', 'Oil & Ghee': '🫙', 'Spices': '🌶️',
@@ -78,6 +80,9 @@ export default function CategoryProductSection({ category, index, limit = 5, eag
   const slug    = category.slug;
   const catLink = `/category/${slug}`;
 
+  const { t, language } = useLanguageStore();
+  const categoryDisplayName = getCategoryName(category.name, language);
+
   return (
     <motion.section
       ref={sectionRef}
@@ -92,14 +97,14 @@ export default function CategoryProductSection({ category, index, limit = 5, eag
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white shadow-sm flex items-center justify-center text-2xl overflow-hidden border border-gray-100 flex-shrink-0">
             {catImg ? (
-              <img src={catImg} alt={category.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+              <img src={catImg} alt={categoryDisplayName} className="w-full h-full object-cover" loading="lazy" decoding="async" />
             ) : (
               <span>{emoji}</span>
             )}
           </div>
           <div>
             <h2 className={`text-lg md:text-xl font-black font-heading ${HEADER_COLORS[colorIdx]}`}>
-              {category.name}
+              {categoryDisplayName}
             </h2>
             {category.description && (
               <p className="text-xs text-gray-500 mt-0.5 hidden md:block">{category.description}</p>
@@ -110,7 +115,7 @@ export default function CategoryProductSection({ category, index, limit = 5, eag
           to={catLink}
           className="text-sm font-semibold text-gray-500 hover:text-gray-800 underline underline-offset-2 transition-colors"
         >
-          View all →
+          {t('see_all')} →
         </Link>
       </div>
 
@@ -137,16 +142,16 @@ export default function CategoryProductSection({ category, index, limit = 5, eag
             className="flex-shrink-0 w-40 md:w-48 flex flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-gray-300 hover:border-gray-400 bg-white/70 hover:bg-white transition-all group min-h-[200px]"
           >
             {catImg ? (
-              <img src={catImg} alt={category.name} className="w-12 h-12 rounded-full object-cover shadow-sm group-hover:scale-110 transition-transform p-0.5 border" loading="lazy" decoding="async" />
+              <img src={catImg} alt={categoryDisplayName} className="w-12 h-12 rounded-full object-cover shadow-sm group-hover:scale-110 transition-transform p-0.5 border" loading="lazy" decoding="async" />
             ) : (
               <span className="text-4xl group-hover:scale-110 transition-transform">{emoji}</span>
             )}
             <div className="text-center px-2">
-              <p className="text-sm font-bold text-gray-700">View More</p>
-              <p className="text-xs text-gray-400 mt-0.5">{category.name}</p>
+              <p className="text-sm font-bold text-gray-700">{t('see_all')}</p>
+              <p className="text-xs text-gray-400 mt-0.5">{categoryDisplayName}</p>
             </div>
             <div className={`text-white text-xs font-bold px-4 py-1.5 rounded-full shadow ${VIEW_MORE_COLORS[colorIdx]}`}>
-              See All →
+              {t('see_all')} →
             </div>
           </Link>
         )}

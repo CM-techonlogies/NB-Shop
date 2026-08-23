@@ -5,6 +5,8 @@ import ProductGrid from '../../components/product/ProductGrid';
 import ProductCard from '../../components/product/ProductCard';
 import { useProducts, useCategories } from '../../hooks/useProducts';
 import { STORE_NAME } from '../../constants';
+import { useLanguageStore } from '../../store/languageStore';
+import { getCategoryName } from '../../constants/translations';
 import {
   FunnelIcon,
   MagnifyingGlassIcon,
@@ -25,6 +27,7 @@ const SORT_OPTIONS = [
 
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t, language } = useLanguageStore();
 
   // Search params state
   const initialSearch = searchParams.get('search') || '';
@@ -129,7 +132,8 @@ export default function ProductsPage() {
     }
     if (category) {
       const catObj = categories.find(c => (c.id || c._id) === category);
-      chips.push({ id: 'category', label: `Cat: ${catObj?.name || 'Selected'}`, clear: () => setCategory('') });
+      const catName = catObj ? getCategoryName(catObj.name, language) : 'Selected';
+      chips.push({ id: 'category', label: `Cat: ${catName}`, clear: () => setCategory('') });
     }
     if (brand) {
       chips.push({ id: 'brand', label: `Brand: ${brand}`, clear: () => setBrand('') });
@@ -294,16 +298,16 @@ export default function ProductsPage() {
 
               {/* Category */}
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1.5">Category</label>
+                <label className="block text-xs font-bold text-gray-700 mb-1.5">{t('categories')}</label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl text-xs font-medium outline-none focus:ring-2 focus:ring-primary-500"
                 >
-                  <option value="">All Categories</option>
+                  <option value="">{language === 'hi' ? 'सभी कैटेगरी' : 'All Categories'}</option>
                   {categories.map(cat => (
                     <option key={cat.id || cat._id} value={cat.id || cat._id}>
-                      {cat.name}
+                      {getCategoryName(cat.name, language)}
                     </option>
                   ))}
                 </select>

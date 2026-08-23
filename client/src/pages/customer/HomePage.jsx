@@ -9,6 +9,7 @@ import { Helmet } from 'react-helmet-async';
 import { SkeletonCategoryCard } from '../../components/ui/Skeleton';
 import { useCategories, useBanners } from '../../hooks/useProducts';
 import { useLanguageStore } from '../../store/languageStore';
+import { getCategoryName } from '../../constants/translations';
 import CategoryProductSection from '../../components/home/CategoryProductSection';
 import { STORE_NAME, SAMPLE_CATEGORIES } from '../../constants';
 
@@ -47,8 +48,7 @@ const CATEGORY_EMOJIS = {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState('');
-  const { t } = useLanguageStore();
+  const { t, language } = useLanguageStore();
 
   const { data: dbBanners } = useBanners();
   const activeBanners = Array.isArray(dbBanners) ? dbBanners : [];
@@ -185,7 +185,7 @@ export default function HomePage() {
                       )}
                     </div>
                     <span className="text-xs font-semibold text-gray-700 text-center max-w-[68px] leading-tight group-hover:text-primary-600 transition-colors">
-                      {cat.name}
+                      {getCategoryName(cat.name, language)}
                     </span>
                   </Link>
                 );

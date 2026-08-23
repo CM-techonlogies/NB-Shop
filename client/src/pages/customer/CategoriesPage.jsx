@@ -4,6 +4,8 @@ import { Helmet } from 'react-helmet-async';
 import { useCategories } from '../../hooks/useProducts';
 import { STORE_NAME } from '../../constants';
 import { motion } from 'framer-motion';
+import { useLanguageStore } from '../../store/languageStore';
+import { getCategoryName } from '../../constants/translations';
 
 const baseUrl = import.meta.env.VITE_CLIENT_URL || '';
 const gradients = [
@@ -22,6 +24,7 @@ const CATEGORY_EMOJIS = { 'Rice & Atta': '🌾', 'Oil & Ghee': '🫙', 'Spices':
 export default function CategoriesPage() {
   const { data: categoriesRaw, isLoading } = useCategories();
   const categories = Array.isArray(categoriesRaw) ? categoriesRaw : (categoriesRaw?.data || []);
+  const { t, language } = useLanguageStore();
 
   const container = {
     hidden: { opacity: 0 },
@@ -39,13 +42,15 @@ export default function CategoriesPage() {
   return (
     <div className="animate-fadeIn max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       <Helmet>
-        <title>All Categories - {STORE_NAME}</title>
+        <title>{t('categories')} - {STORE_NAME}</title>
       </Helmet>
 
       {/* ── Page Header ─────────────────────────────────────────── */}
       <div className="text-center mb-6">
-        <h1 className="text-3xl md:text-5xl font-black font-heading text-gray-900 mb-3">Shop by Category</h1>
-        <p className="text-gray-500 max-w-2xl mx-auto text-base">Find everything you need for your home, carefully organized for your convenience.</p>
+        <h1 className="text-3xl md:text-5xl font-black font-heading text-gray-900 mb-3">{t('shop_by_category')}</h1>
+        <p className="text-gray-500 max-w-2xl mx-auto text-base">
+          {language === 'hi' ? 'अपनी ज़रूरतों के अनुसार श्रेणीबद्ध सभी किराना उत्पाद खोजें।' : 'Find everything you need for your home, carefully organized for your convenience.'}
+        </p>
       </div>
 
       {/* ── Browse All Products Banner ───────────────────────────── */}
@@ -62,15 +67,15 @@ export default function CategoriesPage() {
           <div className="flex items-center gap-3">
             <span className="text-2xl">🛍️</span>
             <div className="text-left">
-              <p className="font-black text-base leading-tight">Browse All Products</p>
+              <p className="font-black text-base leading-tight">{language === 'hi' ? 'सभी उत्पाद देखें' : 'Browse All Products'}</p>
               <p className="text-white/80 text-xs font-medium mt-0.5">
-                {isLoading ? 'Loading...' : `${categories.length > 0 ? `${categories.length} categories` : 'All items'} available`}
+                {isLoading ? 'Loading...' : `${categories.length > 0 ? `${categories.length} ${t('categories')}` : 'All items'} available`}
               </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-xl group-hover:bg-white/30 transition-colors whitespace-nowrap">
-              See All →
+              {t('see_all')} →
             </span>
           </div>
         </Link>
@@ -92,6 +97,7 @@ export default function CategoriesPage() {
           {categories.map((cat, idx) => {
             const bgClass = gradients[idx % gradients.length];
             const catImg = cat.image_url || cat.image?.url || (typeof cat.image === 'string' ? cat.image : null);
+            const catDisplayName = getCategoryName(cat.name, language);
             return (
               <motion.div key={cat.id || cat._id} variants={item}>
                 <Link 
@@ -103,14 +109,14 @@ export default function CategoriesPage() {
                   
                   <div className="relative z-10 w-20 h-20 md:w-28 md:h-28 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-4xl md:text-5xl mb-4 shadow-inner group-hover:scale-110 transition-transform duration-300 overflow-hidden">
                     {catImg ? (
-                      <img src={catImg.startsWith('http') || catImg.startsWith('/') || catImg.startsWith('data:') ? catImg : `${baseUrl}/${catImg}`} alt={cat.name} className="w-full h-full rounded-full object-cover p-1" />
+                      <img src={catImg.startsWith('http') || catImg.startsWith('/') || catImg.startsWith('data:') ? catImg : `${baseUrl}/${catImg}`} alt={catDisplayName} className="w-full h-full rounded-full object-cover p-1" />
                     ) : (
                       <span>{CATEGORY_EMOJIS[cat.name] || '🛍️'}</span>
                     )}
                   </div>
                   
                   <h3 className="relative z-10 text-white font-bold font-heading text-lg md:text-xl text-center leading-tight drop-shadow-md">
-                    {cat.name}
+                    {catDisplayName}
                   </h3>
                 </Link>
               </motion.div>
