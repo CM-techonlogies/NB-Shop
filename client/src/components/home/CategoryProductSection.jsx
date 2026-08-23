@@ -45,6 +45,7 @@ const VIEW_MORE_COLORS = [
 export default function CategoryProductSection({ category, index, limit = 5, eagerCount = 2 }) {
   const colorIdx = index % SECTION_GRADIENTS.length;
   const sectionRef = useRef(null);
+  const { t, language } = useLanguageStore();  // ← hooks must be at top, before any return
 
   // First `eagerCount` sections load immediately; the rest wait for viewport proximity
   const [shouldFetch, setShouldFetch] = useState(index < eagerCount);
@@ -80,7 +81,6 @@ export default function CategoryProductSection({ category, index, limit = 5, eag
   const slug    = category.slug;
   const catLink = `/category/${slug}`;
 
-  const { t, language } = useLanguageStore();
   const categoryDisplayName = getCategoryName(category.name, language);
 
   return (
