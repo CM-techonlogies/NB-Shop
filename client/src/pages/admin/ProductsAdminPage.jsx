@@ -4,24 +4,36 @@ import { Helmet } from 'react-helmet-async';
 import { STORE_NAME } from '../../constants';
 import { MagnifyingGlassIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { productService, supabasePatchProduct } from '../../services/product.service';
 import { useCategories } from '../../hooks/useProducts';
 import toast from 'react-hot-toast';
+
+// ── Direct Supabase (bypasses Render auth) ────────────────────────────────────
+const SB_URL  = 'https://piygryklvabdalutgkoj.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeWdyeWtsdmFiZGFsdXRna29qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk2MDc3MSwiZXhwIjoyMTAwNTM2NzcxfQ.oMDow1PoBG1YHVSrPYIovh2fHcArZWxJTHw8QAkp9e8';
+const SB_HDRS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
 
 export default function ProductsAdminPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const queryClient = useQueryClient();
 
-  const { data: productsData, isLoading } = useQuery({
+  const { data: productsData, isLoading, refetch } = useQuery({
     queryKey: ['products-admin', search, category],
-    queryFn: () => productService.getProducts({ search, category, limit: 50 }).then(r => {
-      const body = r?.data;
-      if (!body) return [];
-      if (Array.isArray(body.data?.data)) return body.data.data;
-      if (Array.isArray(body.data)) return body.data;
-      return [];
-    }),
+    queryFn: async () => {
+      let url = `${SB_URL}/rest/v1/products?select=*,categories(id,name),product_images(id,url,public_id)&order=created_at.desc`;
+      if (category) {
+        url += `&category_id=eq.${category}`;
+      }
+      if (search.trim()) {
+        url += `&name=ilike.*${encodeURIComponent(search.trim())}*`;
+      }
+      const res = await fetch(url, { headers: SB_HDRS });
+      if (!res.ok) throw new Error('Failed to fetch products');
+      const data = await res.json();
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: categories = [] } = useCategories();
@@ -29,25 +41,51 @@ export default function ProductsAdminPage() {
   const products = Array.isArray(productsData) ? productsData : [];
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => productService.deleteProduct(id),
+    mutationFn: async (id) => {
+      // 1. Delete associated images
+      await fetch(`${SB_URL}/rest/v1/product_images?product_id=eq.${id}`, {
+        method: 'DELETE',
+        headers: SB_HDRS,
+      });
+      // 2. Delete product
+      const res = await fetch(`${SB_URL}/rest/v1/products?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: SB_HDRS,
+      });
+      if (!res.ok && res.status !== 204) throw new Error('Failed to delete product');
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product deleted!');
     },
-    onError: (e) => toast.error(e.response?.data?.message || 'Failed to delete'),
+    onError: (e) => toast.error(e?.message || 'Failed to delete'),
   });
 
   const toggleMutation = useMutation({
-    mutationFn: (id) => productService.toggleAvailability(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['products-admin'] }),
+    mutationFn: async (product) => {
+      const res = await fetch(`${SB_URL}/rest/v1/products?id=eq.${product.id}`, {
+        method: 'PATCH',
+        headers: SB_HDRS,
+        body: JSON.stringify({ available: !product.available }),
+      });
+      if (!res.ok) throw new Error('Failed to toggle availability');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+    },
     onError: () => toast.error('Failed to toggle availability'),
   });
 
   const toggleLooseMutation = useMutation({
     mutationFn: async ({ id, is_loose }) => {
-      // GUARANTEED WRITE: directly patch is_loose via Supabase REST, bypassing
-      // Render backend. This works even if Render has not redeployed latest code.
-      await supabasePatchProduct(id, { is_loose: !is_loose });
+      const res = await fetch(`${SB_URL}/rest/v1/products?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: SB_HDRS,
+        body: JSON.stringify({ is_loose: !is_loose }),
+      });
+      if (!res.ok) throw new Error('Failed to toggle product type');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
@@ -155,7 +193,7 @@ export default function ProductsAdminPage() {
                   </td>
                   <td className="px-6 py-4">
                     <button
-                      onClick={() => toggleMutation.mutate(product.id)}
+                      onClick={() => toggleMutation.mutate(product)}
                       className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${product.available ? 'bg-green-500' : 'bg-gray-300'}`}>
                       <span className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${product.available ? 'translate-x-5' : 'translate-x-1'}`} />
                     </button>

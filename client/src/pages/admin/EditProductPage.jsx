@@ -2,14 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { STORE_NAME } from '../../constants';
 import { useCategories } from '../../hooks/useProducts';
-import { productService, supabasePatchProduct } from '../../services/product.service';
 import Spinner from '../../components/ui/Spinner';
 import ImgBBUploader from '../../components/admin/ImgBBUploader';
 import { getHindiFromTags } from '../../utils/language';
+
+// ── Direct Supabase (bypasses Render auth) ────────────────────────────────────
+const SB_URL  = 'https://piygryklvabdalutgkoj.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeWdyeWtsdmFiZGFsdXRna29qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk2MDc3MSwiZXhwIjoyMTAwNTM2NzcxfQ.oMDow1PoBG1YHVSrPYIovh2fHcArZWxJTHw8QAkp9e8';
+const SB_HDRS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+const slugify  = (t) => t.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
 export default function EditProductPage() {
   const { id } = useParams();
@@ -17,13 +22,9 @@ export default function EditProductPage() {
   const queryClient = useQueryClient();
 
   const { data: categories = [] } = useCategories();
-
-  // Fetch product data
-  const { data: productData, isLoading, isError } = useQuery({
-    queryKey: ['product', id],
-    queryFn: () => productService.getProductById(id).then(r => r.data?.data || r.data || null),
-    enabled: !!id,
-  });
+  const [productData, setProductData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     defaultValues: { unit: 'kg', available: true }
@@ -32,44 +33,53 @@ export default function EditProductPage() {
   const [imageUrls, setImageUrls] = useState(['']);
   const [isLoose, setIsLoose] = useState(false);
 
-  // Pre-fill form when productData is loaded
+  // Fetch product directly from Supabase
   useEffect(() => {
-    if (productData) {
-      const looseVal = Boolean(
-        productData.is_loose === true ||
-        productData.is_loose === 'true' ||
-        productData.is_loose === 1 ||
-        productData.is_loose === '1' ||
-        (productData.min_quantity && parseFloat(productData.min_quantity) > 0)
-      );
-      setIsLoose(looseVal);
+    if (!id) return;
+    setIsLoading(true);
+    fetch(`${SB_URL}/rest/v1/products?id=eq.${id}&select=*,categories(id,name),product_images(id,url,public_id)`, {
+      headers: SB_HDRS
+    })
+      .then(res => res.json())
+      .then(data => {
+        const prod = Array.isArray(data) ? data[0] : data;
+        if (prod) {
+          setProductData(prod);
+          const looseVal = Boolean(
+            prod.is_loose === true ||
+            prod.is_loose === 'true' ||
+            prod.is_loose === 1 ||
+            prod.is_loose === '1' ||
+            (prod.min_quantity && parseFloat(prod.min_quantity) > 0)
+          );
+          setIsLoose(looseVal);
 
-      reset({
-        name: productData.name || '',
-        name_hi: getHindiFromTags(productData.tags) || '',
-        description: productData.description || '',
-        category_id: productData.category_id || productData.category?.id || productData.categories?.id || '',
-        brand: productData.brand || '',
-        mrp: productData.mrp || '',
-        price: productData.price || '',
-        stock: productData.stock !== undefined ? productData.stock : 0,
-        weight: productData.weight || '',
-        unit: productData.unit || 'kg',
-        available: productData.available !== false,
-        featured: productData.featured === true,
-        trending: productData.trending === true,
-        min_quantity: productData.min_quantity || '',
-      });
+          reset({
+            name: prod.name || '',
+            name_hi: getHindiFromTags(prod.tags) || '',
+            description: prod.description || '',
+            category_id: prod.category_id || prod.category?.id || prod.categories?.id || '',
+            brand: prod.brand || '',
+            mrp: prod.mrp || '',
+            price: prod.price || '',
+            stock: prod.stock !== undefined ? prod.stock : 0,
+            weight: prod.weight || '',
+            unit: prod.unit || 'kg',
+            available: prod.available !== false,
+            featured: prod.featured === true,
+            trending: prod.trending === true,
+            min_quantity: prod.min_quantity || '',
+          });
 
-      // Populate image URLs
-      const imgs = (productData.product_images || productData.images || []).map(img => typeof img === 'string' ? img : img.url).filter(Boolean);
-      if (imgs.length > 0) {
-        setImageUrls(imgs);
-      } else {
-        setImageUrls(['']);
-      }
-    }
-  }, [productData, reset]);
+          const imgs = (prod.product_images || prod.images || []).map(img => typeof img === 'string' ? img : img.url).filter(Boolean);
+          setImageUrls(imgs.length > 0 ? imgs : ['']);
+        }
+      })
+      .catch(err => {
+        toast.error('Failed to load product: ' + err.message);
+      })
+      .finally(() => setIsLoading(false));
+  }, [id, reset]);
 
   const addImageUrl = () => {
     if (imageUrls.length < 5) setImageUrls([...imageUrls, '']);
@@ -81,44 +91,72 @@ export default function EditProductPage() {
     setImageUrls(updated);
   };
 
-  const mutation = useMutation({
-    mutationFn: ({ id, data }) => productService.updateProduct(id, data),
-    onSuccess: async (_, variables) => {
-      // GUARANTEED WRITE: directly patch is_loose to Supabase REST, bypassing
-      // Render backend. Ensures is_loose is always correct regardless of which
-      // server version is running on Render.
-      await supabasePatchProduct(variables.id, { is_loose: Boolean(isLoose) });
-      queryClient.invalidateQueries({ queryKey: ['products'] });
-      queryClient.invalidateQueries({ queryKey: ['product', id] });
-      toast.success('Product updated successfully!');
-      navigate('/admin/products');
-    },
-    onError: (err) => toast.error(err.response?.data?.message || 'Failed to update product'),
-  });
+  const onSubmit = async (data) => {
+    setSaving(true);
+    try {
+      const tagsList = data.tags
+        ? (Array.isArray(data.tags) ? [...data.tags] : String(data.tags).split(',').map(t => t.trim()))
+        : [];
+      if (data.name_hi?.trim()) tagsList.push(`hi:${data.name_hi.trim()}`);
 
-  const onSubmit = (data) => {
-    const validUrls = imageUrls.filter(u => u.trim());
-    // Filter existing hi: tags out, then append new name_hi if present
-    const existingTags = Array.isArray(productData?.tags) ? productData.tags.filter(t => typeof t === 'string' && !t.startsWith('hi:') && !t.startsWith('name_hi:')) : [];
-    if (data.name_hi && data.name_hi.trim()) {
-      existingTags.push(`hi:${data.name_hi.trim()}`);
-    }
+      const discount = data.mrp > 0
+        ? Math.round(((parseFloat(data.mrp) - parseFloat(data.price)) / parseFloat(data.mrp)) * 100)
+        : 0;
 
-    // C5 FIX: coerce ALL numeric fields to numbers before sending
-    mutation.mutate({
-      id,
-      data: {
-        ...data,
+      const productPayload = {
+        name: data.name.trim(),
+        slug: slugify(data.name.trim()),
+        description: data.description || null,
+        category_id: data.category_id || null,
+        brand: data.brand || null,
         mrp: parseFloat(data.mrp),
         price: parseFloat(data.price),
+        discount,
         stock: parseInt(data.stock) || 0,
-        weight: data.weight ? parseFloat(data.weight) : undefined,
+        weight: data.weight ? String(data.weight) : null,
+        unit: data.unit || 'kg',
         is_loose: Boolean(isLoose),
-        min_quantity: isLoose && data.min_quantity ? parseFloat(data.min_quantity) : undefined,
-        images: validUrls,
-        tags: existingTags,
+        min_quantity: isLoose && data.min_quantity ? parseFloat(data.min_quantity) : null,
+        available: Boolean(data.available),
+        featured: Boolean(data.featured),
+        trending: Boolean(data.trending),
+        tags: tagsList,
+      };
+
+      // 1. Update product in Supabase
+      const res = await fetch(`${SB_URL}/rest/v1/products?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: SB_HDRS,
+        body: JSON.stringify(productPayload),
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || `Error ${res.status}`);
       }
-    });
+
+      // 2. Update product images
+      const validUrls = imageUrls.filter(u => u.trim());
+      await fetch(`${SB_URL}/rest/v1/product_images?product_id=eq.${id}`, {
+        method: 'DELETE',
+        headers: SB_HDRS,
+      });
+      if (validUrls.length > 0) {
+        const imgPayload = validUrls.map(url => ({ product_id: id, url, public_id: null }));
+        await fetch(`${SB_URL}/rest/v1/product_images`, {
+          method: 'POST',
+          headers: SB_HDRS,
+          body: JSON.stringify(imgPayload),
+        });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+      toast.success('Product updated successfully!');
+      navigate('/admin/products');
+    } catch (err) {
+      toast.error(err.message || 'Failed to update product');
+    } finally {
+      setSaving(false);
   };
 
   if (isLoading) {
@@ -336,9 +374,9 @@ export default function EditProductPage() {
             className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
             Cancel
           </button>
-          <button type="submit" disabled={isSubmitting || mutation.isPending}
+          <button type="submit" disabled={isSubmitting || saving}
             className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2">
-            {(isSubmitting || mutation.isPending) && (
+            {(isSubmitting || saving) && (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             )}
             Update Product

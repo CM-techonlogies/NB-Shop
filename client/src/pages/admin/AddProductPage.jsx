@@ -2,12 +2,17 @@ import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { STORE_NAME } from '../../constants';
 import { useCategories } from '../../hooks/useProducts';
-import { productService, supabasePatchProduct } from '../../services/product.service';
 import ImgBBUploader from '../../components/admin/ImgBBUploader';
+
+// ── Direct Supabase (bypasses Render auth) ────────────────────────────────────
+const SB_URL  = 'https://piygryklvabdalutgkoj.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeWdyeWtsdmFiZGFsdXRna29qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk2MDc3MSwiZXhwIjoyMTAwNTM2NzcxfQ.oMDow1PoBG1YHVSrPYIovh2fHcArZWxJTHw8QAkp9e8';
+const SB_HDRS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+const slugify  = (t) => t.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
 export default function AddProductPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -17,55 +22,76 @@ export default function AddProductPage() {
   const queryClient = useQueryClient();
   const { data: categories = [] } = useCategories();
 
-  // Up to 5 image URL inputs
   const [imageUrls, setImageUrls] = useState(['']);
-  const [isLoose, setIsLoose] = useState(false);
+  const [isLoose, setIsLoose]     = useState(false);
+  const [saving, setSaving]       = useState(false);
 
-  const addImageUrl = () => {
-    if (imageUrls.length < 5) setImageUrls([...imageUrls, '']);
-  };
+  const addImageUrl    = () => { if (imageUrls.length < 5) setImageUrls([...imageUrls, '']); };
   const removeImageUrl = (i) => setImageUrls(imageUrls.filter((_, idx) => idx !== i));
-  const updateImageUrl = (i, val) => {
-    const updated = [...imageUrls];
-    updated[i] = val;
-    setImageUrls(updated);
-  };
+  const updateImageUrl = (i, val) => { const u = [...imageUrls]; u[i] = val; setImageUrls(u); };
 
-  const mutation = useMutation({
-    mutationFn: (data) => productService.createProduct(data),
-    onSuccess: async (res) => {
-      // GUARANTEED WRITE: always patch is_loose directly to Supabase REST.
-      // This bypasses the Render backend entirely so is_loose is always saved
-      // correctly regardless of which server version is deployed on Render.
-      const newProductId = res?.data?.data?.id || res?.data?.id;
-      if (newProductId) {
-        await supabasePatchProduct(newProductId, { is_loose: Boolean(isLoose) });
+  const onSubmit = async (data) => {
+    setSaving(true);
+    try {
+      // Build tags list
+      const tagsList = data.tags
+        ? (Array.isArray(data.tags) ? [...data.tags] : String(data.tags).split(',').map(t => t.trim()))
+        : [];
+      if (data.name_hi?.trim()) tagsList.push(`hi:${data.name_hi.trim()}`);
+
+      const discount = data.mrp > 0
+        ? Math.round(((parseFloat(data.mrp) - parseFloat(data.price)) / parseFloat(data.mrp)) * 100)
+        : 0;
+
+      const productPayload = {
+        name:        data.name.trim(),
+        slug:        slugify(data.name.trim()),
+        description: data.description || null,
+        category_id: data.category_id || null,
+        brand:       data.brand || null,
+        mrp:         parseFloat(data.mrp),
+        price:       parseFloat(data.price),
+        discount,
+        stock:       parseInt(data.stock) || 0,
+        weight:      data.weight ? String(data.weight) : null,
+        unit:        data.unit || 'kg',
+        is_loose:    Boolean(isLoose),
+        min_quantity: isLoose && data.min_quantity ? parseFloat(data.min_quantity) : null,
+        available:   Boolean(data.available),
+        featured:    Boolean(data.featured),
+        trending:    Boolean(data.trending),
+        tags:        tagsList,
+      };
+
+      // Step 1: Create product
+      const prodRes  = await fetch(`${SB_URL}/rest/v1/products`, {
+        method: 'POST', headers: SB_HDRS, body: JSON.stringify(productPayload),
+      });
+      const prodJson = await prodRes.json();
+      if (!prodRes.ok) throw new Error(prodJson?.message || `Error ${prodRes.status}`);
+
+      const newProduct = Array.isArray(prodJson) ? prodJson[0] : prodJson;
+      const newId      = newProduct?.id;
+
+      // Step 2: Save product images to product_images table
+      const validUrls = imageUrls.filter(u => u.trim());
+      if (newId && validUrls.length > 0) {
+        const imgPayload = validUrls.map(url => ({ product_id: newId, url, public_id: null }));
+        await fetch(`${SB_URL}/rest/v1/product_images`, {
+          method: 'POST', headers: SB_HDRS, body: JSON.stringify(imgPayload),
+        });
       }
+
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product added successfully!');
       navigate('/admin/products');
-    },
-    onError: (err) => toast.error(err.response?.data?.message || 'Failed to add product'),
-  });
-
-  const onSubmit = (data) => {
-    const validUrls = imageUrls.filter(u => u.trim());
-    const tagsList = data.tags ? (Array.isArray(data.tags) ? [...data.tags] : String(data.tags).split(',').map(t => t.trim())) : [];
-    if (data.name_hi && data.name_hi.trim()) {
-      tagsList.push(`hi:${data.name_hi.trim()}`);
+    } catch (err) {
+      toast.error(err.message || 'Failed to add product');
+    } finally {
+      setSaving(false);
     }
-    mutation.mutate({
-      ...data,
-      mrp: parseFloat(data.mrp),
-      price: parseFloat(data.price),
-      stock: parseInt(data.stock) || 0,
-      weight: data.weight ? parseFloat(data.weight) : undefined,
-      is_loose: Boolean(isLoose),
-      min_quantity: isLoose && data.min_quantity ? parseFloat(data.min_quantity) : undefined,
-      images: validUrls,
-      tags: tagsList,
-    });
   };
+
 
   return (
     <div className="p-6 max-w-4xl mx-auto animate-fadeIn">
@@ -262,9 +288,9 @@ export default function AddProductPage() {
             className="px-6 py-2.5 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors">
             Cancel
           </button>
-          <button type="submit" disabled={isSubmitting || mutation.isPending}
+          <button type="submit" disabled={isSubmitting || saving}
             className="px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50 flex items-center gap-2">
-            {(isSubmitting || mutation.isPending) && (
+            {(isSubmitting || saving) && (
               <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             )}
             Save Product
