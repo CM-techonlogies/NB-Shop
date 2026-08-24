@@ -1,59 +1,94 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { STORE_NAME } from '../../constants';
 import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supaCategories } from '../../services/supabaseAdmin';
 import toast from 'react-hot-toast';
 
 import { getCategoryName } from '../../constants/translations';
+
+// ── Direct Supabase constants (hardcoded for reliability) ───────────────────
+const SB_URL  = 'https://piygryklvabdalutgkoj.supabase.co';
+const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeWdyeWtsdmFiZGFsdXRna29qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk2MDc3MSwiZXhwIjoyMTAwNTM2NzcxfQ.oMDow1PoBG1YHVSrPYIovh2fHcArZWxJTHw8QAkp9e8';
+const SB_HDRS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
+
+const slugify = (t) => t.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
 const EMPTY_FORM = { name: '', name_hi: '', description: '', image_url: '', sort_order: 0, visible: true };
 
 export default function CategoriesAdminPage() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editCategory, setEditCategory] = useState(null); // null = add mode
+  const [editCategory, setEditCategory] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  // ── Fetch directly from Supabase (bypasses Render auth) ──────────────────
-  const { data, isLoading, refetch } = useQuery({
-    queryKey: ['categories-admin'],
-    queryFn: () => supaCategories.getAll(),
-    staleTime: 0,              // always treat as stale → always refetch
-    refetchOnMount: 'always',  // refetch every time this page is opened
-    refetchOnWindowFocus: true, // refetch when tab gets focus
-  });
-  const categories = Array.isArray(data) ? data : [];
+  // ── Direct fetch — no React Query, no module, guaranteed fresh data ────────
+  const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading]   = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
+  const loadCategories = useCallback(async () => {
+    setIsLoading(true);
+    setFetchError(null);
+    try {
+      const res  = await fetch(`${SB_URL}/rest/v1/categories?select=*&order=sort_order.asc`, { headers: SB_HDRS });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || `Error ${res.status}`);
+      setCategories(Array.isArray(json) ? json : []);
+    } catch (err) {
+      setFetchError(err.message);
+      toast.error('Failed to load categories: ' + err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { loadCategories(); }, [loadCategories]);
+
 
   const createMutation = useMutation({
-    mutationFn: (d) => supaCategories.create(d),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Category created!');
-      closeModal();
+    mutationFn: async (d) => {
+      const slug = slugify(d.name);
+      const res = await fetch(`${SB_URL}/rest/v1/categories`, {
+        method: 'POST',
+        headers: SB_HDRS,
+        body: JSON.stringify({ ...d, slug }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || `Error ${res.status}`);
+      return json;
     },
+    onSuccess: () => { toast.success('Category created!'); closeModal(); loadCategories(); },
     onError: (e) => toast.error(e?.message || 'Failed to create category'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }) => supaCategories.update(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      toast.success('Category updated!');
-      closeModal();
+    mutationFn: async ({ id, data }) => {
+      const patch = { ...data };
+      if (data.name) patch.slug = slugify(data.name);
+      const res = await fetch(`${SB_URL}/rest/v1/categories?id=eq.${id}`, {
+        method: 'PATCH',
+        headers: SB_HDRS,
+        body: JSON.stringify(patch),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || `Error ${res.status}`);
+      return json;
     },
+    onSuccess: () => { toast.success('Category updated!'); closeModal(); loadCategories(); },
     onError: (e) => toast.error(e?.message || 'Failed to update category'),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id) => supaCategories.delete(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
-      toast.success('Category deleted!');
+    mutationFn: async (id) => {
+      const res = await fetch(`${SB_URL}/rest/v1/categories?id=eq.${id}`, {
+        method: 'DELETE',
+        headers: SB_HDRS,
+      });
+      if (!res.ok && res.status !== 204) throw new Error(`Error ${res.status}`);
     },
+    onSuccess: () => { toast.success('Category deleted!'); loadCategories(); },
     onError: (e) => toast.error(e?.message || 'Cannot delete: products may exist'),
   });
 
@@ -116,7 +151,7 @@ export default function CategoriesAdminPage() {
         <div className="flex items-center gap-2">
           {/* Refresh button — force reload from Supabase */}
           <button
-            onClick={() => refetch()}
+            onClick={() => loadCategories()}
             disabled={isLoading}
             title="Refresh from database"
             className="border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 shadow-sm"
@@ -146,7 +181,12 @@ export default function CategoriesAdminPage() {
           </thead>
           <tbody className="divide-y divide-gray-100 text-sm">
             {isLoading ? (
-              <tr><td colSpan="5" className="text-center py-10 text-gray-500">Loading...</td></tr>
+              <tr><td colSpan="5" className="text-center py-10 text-gray-500">Loading categories...</td></tr>
+            ) : fetchError ? (
+              <tr><td colSpan="5" className="text-center py-10 text-red-500">
+                ⚠️ Error: {fetchError} &nbsp;
+                <button onClick={loadCategories} className="underline text-indigo-600">Retry</button>
+              </td></tr>
             ) : categories.length === 0 ? (
               <tr><td colSpan="5" className="text-center py-10 text-gray-400">No categories yet. Add one!</td></tr>
             ) : categories.map(cat => (
