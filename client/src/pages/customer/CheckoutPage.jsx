@@ -117,7 +117,7 @@ export default function CheckoutPage() {
 
       const paymentLabel = paymentMethod === 'cod' 
         ? `Cash on Delivery${codChangeNote ? ` (Change needed: ${codChangeNote})` : ''}` 
-        : 'Online UPI / QR Payment';
+        : 'Store Pickup (Pay at Store)';
       
       const formattedNotes = data.notes 
         ? `[Payment Mode: ${paymentLabel}] ${data.notes}` 
@@ -367,11 +367,11 @@ export default function CheckoutPage() {
                 )}
               </div>
 
-              {/* Option 2: Online UPI / QR Code */}
+              {/* Option 2: Store Pickup & Pay */}
               <div 
-                onClick={() => setPaymentMethod('upi')}
+                onClick={() => setPaymentMethod('pickup')}
                 className={`p-5 border-2 rounded-2xl cursor-pointer transition-all flex flex-col gap-3 ${
-                  paymentMethod === 'upi' 
+                  paymentMethod === 'pickup' 
                     ? 'border-emerald-500 bg-emerald-50/60 shadow-xs' 
                     : 'border-gray-200 hover:border-gray-300 bg-white'
                 }`}
@@ -380,44 +380,33 @@ export default function CheckoutPage() {
                   <input 
                     type="radio" 
                     name="paymentMode" 
-                    checked={paymentMethod === 'upi'} 
-                    onChange={() => setPaymentMethod('upi')}
+                    checked={paymentMethod === 'pickup'} 
+                    onChange={() => setPaymentMethod('pickup')}
                     className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 cursor-pointer" 
                   />
                   <div className="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="text-lg">📱</span>
-                        <p className="font-bold text-gray-900 text-sm">{t('upi_title')}</p>
+                        <span className="text-lg">🏬</span>
+                        <p className="font-bold text-gray-900 text-sm">{t('pickup_title')}</p>
                       </div>
-                      <p className="text-xs text-gray-500 mt-0.5">{t('upi_desc')}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t('pickup_desc')}</p>
                     </div>
                     
-                    {/* Brand Badges */}
+                    {/* Badge */}
                     <div className="flex items-center gap-1.5 self-start sm:self-center">
-                      <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 text-[10px] font-bold rounded-md">GPay</span>
-                      <span className="px-2 py-0.5 bg-purple-50 text-purple-700 border border-purple-200 text-[10px] font-bold rounded-md">PhonePe</span>
-                      <span className="px-2 py-0.5 bg-cyan-50 text-cyan-700 border border-cyan-200 text-[10px] font-bold rounded-md">Paytm</span>
+                      <span className="px-2.5 py-1 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-lg flex items-center gap-1">
+                        <span>🏬</span> Store Pickup
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Expanded UPI Details Box */}
-                {paymentMethod === 'upi' && (
-                  <div className="mt-2 p-3.5 bg-white border border-emerald-200 rounded-xl space-y-2.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500 font-medium">{t('store_upi_id')}</span>
-                      <div className="flex items-center gap-2">
-                        <code className="text-xs font-mono font-bold bg-gray-100 text-gray-800 px-2 py-0.5 rounded border">{storeUpiId}</code>
-                        <button 
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); handleCopyUpi(); }}
-                          className="text-[11px] font-bold text-emerald-600 hover:text-emerald-800 underline"
-                        >
-                          {t('copy')}
-                        </button>
-                      </div>
-                    </div>
+                {/* Helpful Note for Store Pickup */}
+                {paymentMethod === 'pickup' && (
+                  <div className="mt-1 p-3 bg-white border border-emerald-200 rounded-xl flex items-center gap-2 text-xs text-emerald-800">
+                    <span>ℹ️</span>
+                    <span>Your order will be packed and ready for pickup at our store counter. You can pay via Cash or UPI at the store.</span>
                   </div>
                 )}
               </div>
