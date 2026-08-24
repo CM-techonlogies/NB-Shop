@@ -38,23 +38,39 @@ async function supaFetch(path, options = {}) {
   return res.json();
 }
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+/** Convert a name to a URL-safe slug, e.g. "Dairy & Eggs" → "dairy-eggs" */
+const slugify = (text) =>
+  text
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+
 // ─── CATEGORIES ──────────────────────────────────────────────────────────────
 
 export const supaCategories = {
   getAll: () =>
     supaFetch('/categories?select=*&order=sort_order.asc'),
 
-  create: ({ name, description, image_url, sort_order = 0, visible = true }) =>
-    supaFetch('/categories', {
+  create: ({ name, description, image_url, sort_order = 0, visible = true }) => {
+    const slug = slugify(name);
+    return supaFetch('/categories', {
       method: 'POST',
-      body: JSON.stringify({ name, description, image_url, sort_order, visible }),
-    }),
+      body: JSON.stringify({ name, slug, description, image_url, sort_order, visible }),
+    });
+  },
 
-  update: (id, data) =>
-    supaFetch(`/categories?id=eq.${id}`, {
+  update: (id, data) => {
+    // If name is being updated, also regenerate the slug
+    const patch = { ...data };
+    if (data.name) patch.slug = slugify(data.name);
+    return supaFetch(`/categories?id=eq.${id}`, {
       method: 'PATCH',
-      body: JSON.stringify(data),
-    }),
+      body: JSON.stringify(patch),
+    });
+  },
 
   delete: (id) =>
     supaFetch(`/categories?id=eq.${id}`, { method: 'DELETE' }),
@@ -135,11 +151,19 @@ export const supaProducts = {
   getAll: () =>
     supaFetch('/products?select=*,categories(id,name),product_images(id,url,public_id)&order=created_at.desc'),
 
-  create: (data) =>
-    supaFetch('/products', { method: 'POST', body: JSON.stringify(data) }),
+  create: (data) => {
+    // Auto-generate slug from product name if not provided
+    const payload = { ...data };
+    if (!payload.slug && payload.name) payload.slug = slugify(payload.name);
+    return supaFetch('/products', { method: 'POST', body: JSON.stringify(payload) });
+  },
 
-  update: (id, data) =>
-    supaFetch(`/products?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  update: (id, data) => {
+    const patch = { ...data };
+    // Regenerate slug if name changes
+    if (data.name && !data.slug) patch.slug = slugify(data.name);
+    return supaFetch(`/products?id=eq.${id}`, { method: 'PATCH', body: JSON.stringify(patch) });
+  },
 
   delete: (id) =>
     supaFetch(`/products?id=eq.${id}`, { method: 'DELETE' }),
