@@ -157,6 +157,7 @@ export default function EditProductPage() {
       toast.error(err.message || 'Failed to update product');
     } finally {
       setSaving(false);
+    }
   };
 
   if (isLoading) {
@@ -167,7 +168,7 @@ export default function EditProductPage() {
     );
   }
 
-  if (isError || !productData) {
+  if (!productData && !isLoading) {
     return (
       <div className="text-center py-20">
         <h2 className="text-xl font-bold mb-2 text-gray-800">Product not found</h2>
