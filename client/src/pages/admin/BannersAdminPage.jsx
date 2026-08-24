@@ -27,6 +27,9 @@ export default function BannersAdminPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-banners'],
     queryFn: () => supaBanners.getAll(),
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
   const banners = Array.isArray(data) ? data : [];
 

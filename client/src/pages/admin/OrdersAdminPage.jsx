@@ -41,7 +41,9 @@ export default function OrdersAdminPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['admin-orders', activeTab],
     queryFn: () => supaOrders.getAll(activeTab || undefined),
-    staleTime: 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const orders = Array.isArray(data) ? data : [];
