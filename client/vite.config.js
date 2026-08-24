@@ -40,12 +40,12 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // Product images from Supabase / CDN
+          // Product images from Supabase Storage / ImgBB / CDN (ONLY image files, NEVER REST APIs)
           {
             urlPattern: ({ url }) =>
-              url.pathname.includes('/storage/') ||
-              url.hostname.includes('supabase') ||
-              /\.(png|jpg|jpeg|webp|svg|gif)$/i.test(url.pathname),
+              (/\.(png|jpg|jpeg|webp|svg|gif|avif)$/i.test(url.pathname) ||
+               url.pathname.includes('/storage/v1/object/public/')) &&
+              !url.pathname.includes('/rest/v1/'),
             handler: 'CacheFirst',
             options: {
               cacheName: 'product-images',
@@ -53,15 +53,13 @@ export default defineConfig({
               cacheableResponse: { statuses: [0, 200] },
             },
           },
-          // API responses
+          // Supabase REST and Backend APIs — ALWAYS NetworkOnly (Zero Cache in Service Worker)
           {
-            urlPattern: ({ url }) => url.pathname.startsWith('/api/'),
-            handler: 'StaleWhileRevalidate',
-            options: {
-              cacheName: 'api-responses',
-              expiration: { maxEntries: 100, maxAgeSeconds: 5 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
+            urlPattern: ({ url }) =>
+              url.pathname.includes('/rest/v1/') ||
+              url.pathname.startsWith('/api/') ||
+              url.hostname.includes('supabase.co'),
+            handler: 'NetworkOnly',
           },
           // Google Fonts
           {
