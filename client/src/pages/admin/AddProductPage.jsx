@@ -83,6 +83,7 @@ export default function AddProductPage() {
       }
 
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['products-admin'] });
       toast.success('Product added successfully!');
       navigate('/admin/products');
     } catch (err) {
