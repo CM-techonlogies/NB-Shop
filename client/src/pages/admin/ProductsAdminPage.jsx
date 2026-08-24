@@ -5,12 +5,8 @@ import { STORE_NAME } from '../../constants';
 import { MagnifyingGlassIcon, PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCategories } from '../../hooks/useProducts';
+import { productService } from '../../services/product.service';
 import toast from 'react-hot-toast';
-
-// ── Direct Supabase (bypasses Render auth) ────────────────────────────────────
-const SB_URL  = 'https://piygryklvabdalutgkoj.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeWdyeWtsdmFiZGFsdXRna29qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk2MDc3MSwiZXhwIjoyMTAwNTM2NzcxfQ.oMDow1PoBG1YHVSrPYIovh2fHcArZWxJTHw8QAkp9e8';
-const SB_HDRS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
 
 export default function ProductsAdminPage() {
   const [search, setSearch] = useState('');
@@ -20,17 +16,11 @@ export default function ProductsAdminPage() {
   const { data: productsData, isLoading, refetch } = useQuery({
     queryKey: ['products-admin', search, category],
     queryFn: async () => {
-      let url = `${SB_URL}/rest/v1/products?select=*,categories(id,name),product_images(id,url,public_id)&order=created_at.desc`;
-      if (category) {
-        url += `&category_id=eq.${category}`;
-      }
-      if (search.trim()) {
-        url += `&name=ilike.*${encodeURIComponent(search.trim())}*`;
-      }
-      const res = await fetch(url, { headers: SB_HDRS });
-      if (!res.ok) throw new Error('Failed to fetch products');
-      const data = await res.json();
-      return Array.isArray(data) ? data : [];
+      const res = await productService.getProducts({
+        search: search.trim() || undefined,
+        category: category || undefined,
+      });
+      return res?.data?.data || [];
     },
     staleTime: 0,
     gcTime: 0,
@@ -43,56 +33,33 @@ export default function ProductsAdminPage() {
   const products = Array.isArray(productsData) ? productsData : [];
 
   const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      // 1. Delete associated images
-      await fetch(`${SB_URL}/rest/v1/product_images?product_id=eq.${id}`, {
-        method: 'DELETE',
-        headers: SB_HDRS,
-      });
-      // 2. Delete product
-      const res = await fetch(`${SB_URL}/rest/v1/products?id=eq.${id}`, {
-        method: 'DELETE',
-        headers: SB_HDRS,
-      });
-      if (!res.ok && res.status !== 204) throw new Error('Failed to delete product');
-    },
+    mutationFn: (id) => productService.deleteProduct(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product deleted!');
+      refetch();
     },
     onError: (e) => toast.error(e?.message || 'Failed to delete'),
   });
 
   const toggleMutation = useMutation({
-    mutationFn: async (product) => {
-      const res = await fetch(`${SB_URL}/rest/v1/products?id=eq.${product.id}`, {
-        method: 'PATCH',
-        headers: SB_HDRS,
-        body: JSON.stringify({ available: !product.available }),
-      });
-      if (!res.ok) throw new Error('Failed to toggle availability');
-    },
+    mutationFn: (product) => productService.toggleAvailability(product.id, product.available),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
+      refetch();
     },
     onError: () => toast.error('Failed to toggle availability'),
   });
 
   const toggleLooseMutation = useMutation({
-    mutationFn: async ({ id, is_loose }) => {
-      const res = await fetch(`${SB_URL}/rest/v1/products?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: SB_HDRS,
-        body: JSON.stringify({ is_loose: !is_loose }),
-      });
-      if (!res.ok) throw new Error('Failed to toggle product type');
-    },
+    mutationFn: ({ id, is_loose }) => productService.toggleLoose(id, is_loose),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
       toast.success('Product type updated!');
+      refetch();
     },
     onError: () => toast.error('Failed to toggle product type'),
   });

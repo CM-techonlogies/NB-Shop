@@ -4,25 +4,10 @@ import { STORE_NAME } from '../../constants';
 import { PlusIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-
+import { categoryService } from '../../services/category.service';
 import { getCategoryName } from '../../constants/translations';
 
-// ── Direct Supabase (bypasses Render auth) ────────────────────────────────────
-const SB_URL  = 'https://piygryklvabdalutgkoj.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeWdyeWtsdmFiZGFsdXRna29qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk2MDc3MSwiZXhwIjoyMTAwNTM2NzcxfQ.oMDow1PoBG1YHVSrPYIovh2fHcArZWxJTHw8QAkp9e8';
-const SB_HDRS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
-
-const slugify = (t) => t.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-
 const EMPTY_FORM = { name: '', name_hi: '', description: '', image_url: '', sort_order: 0, visible: true };
-
-// Supabase direct fetch function used by useQuery
-const fetchCategories = async () => {
-  const res  = await fetch(`${SB_URL}/rest/v1/categories?select=*&order=sort_order.asc`, { headers: SB_HDRS });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json?.message || `HTTP ${res.status}`);
-  return Array.isArray(json) ? json : [];
-};
 
 export default function CategoriesAdminPage() {
   const queryClient = useQueryClient();
@@ -30,12 +15,10 @@ export default function CategoriesAdminPage() {
   const [editCategory, setEditCategory] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  // ── useQuery with direct Supabase fetch ───────────────────────────────────
-  // staleTime:0 + gcTime:0 means NEVER serve stale data — always refetch on mount
-  // invalidateQueries in onSuccess triggers automatic refetch → instant UI update
+  // Unified Admin Categories Query (staleTime: 0, refetch on mount)
   const { data, isLoading, isError, refetch } = useQuery({
-    queryKey: ['categories-admin-supa'],
-    queryFn: fetchCategories,
+    queryKey: ['categories-admin'],
+    queryFn: () => categoryService.getAllAdmin().then(r => r.data || []),
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: 'always',
@@ -43,63 +26,37 @@ export default function CategoriesAdminPage() {
   });
   const categories = Array.isArray(data) ? data : [];
 
-
   const createMutation = useMutation({
-    mutationFn: async (d) => {
-      const slug = slugify(d.name);
-      const res = await fetch(`${SB_URL}/rest/v1/categories`, {
-        method: 'POST',
-        headers: SB_HDRS,
-        body: JSON.stringify({ ...d, slug }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.message || `Error ${res.status}`);
-      return json;
-    },
+    mutationFn: (d) => categoryService.createCategory(d),
     onSuccess: () => {
       toast.success('Category created!');
       closeModal();
-      // invalidateQueries → React Query auto-refetches → list updates instantly
-      queryClient.invalidateQueries({ queryKey: ['categories-admin-supa'] });
-      queryClient.invalidateQueries({ queryKey: ['categories'] }); // customer side
+      queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      refetch();
     },
     onError: (e) => toast.error(e?.message || 'Failed to create category'),
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }) => {
-      const patch = { ...data };
-      if (data.name) patch.slug = slugify(data.name);
-      const res = await fetch(`${SB_URL}/rest/v1/categories?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: SB_HDRS,
-        body: JSON.stringify(patch),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.message || `Error ${res.status}`);
-      return json;
-    },
+    mutationFn: ({ id, data }) => categoryService.updateCategory(id, data),
     onSuccess: () => {
       toast.success('Category updated!');
       closeModal();
-      queryClient.invalidateQueries({ queryKey: ['categories-admin-supa'] });
+      queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      refetch();
     },
     onError: (e) => toast.error(e?.message || 'Failed to update category'),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id) => {
-      const res = await fetch(`${SB_URL}/rest/v1/categories?id=eq.${id}`, {
-        method: 'DELETE',
-        headers: SB_HDRS,
-      });
-      if (!res.ok && res.status !== 204) throw new Error(`Error ${res.status}`);
-    },
+    mutationFn: (id) => categoryService.deleteCategory(id),
     onSuccess: () => {
       toast.success('Category deleted!');
-      queryClient.invalidateQueries({ queryKey: ['categories-admin-supa'] });
+      queryClient.invalidateQueries({ queryKey: ['categories-admin'] });
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      refetch();
     },
     onError: (e) => toast.error(e?.message || 'Cannot delete: products may exist'),
   });

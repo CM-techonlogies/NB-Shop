@@ -6,15 +6,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { STORE_NAME } from '../../constants';
 import { useCategories } from '../../hooks/useProducts';
+import { productService } from '../../services/product.service';
 import Spinner from '../../components/ui/Spinner';
 import ImgBBUploader from '../../components/admin/ImgBBUploader';
 import { getHindiFromTags } from '../../utils/language';
-
-// ── Direct Supabase (bypasses Render auth) ────────────────────────────────────
-const SB_URL  = 'https://piygryklvabdalutgkoj.supabase.co';
-const SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBpeWdyeWtsdmFiZGFsdXRna29qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NDk2MDc3MSwiZXhwIjoyMTAwNTM2NzcxfQ.oMDow1PoBG1YHVSrPYIovh2fHcArZWxJTHw8QAkp9e8';
-const SB_HDRS = { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', Prefer: 'return=representation' };
-const slugify  = (t) => t.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
 export default function EditProductPage() {
   const { id } = useParams();
@@ -33,16 +28,13 @@ export default function EditProductPage() {
   const [imageUrls, setImageUrls] = useState(['']);
   const [isLoose, setIsLoose] = useState(false);
 
-  // Fetch product directly from Supabase
+  // Fetch product using unified productService
   useEffect(() => {
     if (!id) return;
     setIsLoading(true);
-    fetch(`${SB_URL}/rest/v1/products?id=eq.${id}&select=*,categories(id,name),product_images(id,url,public_id)`, {
-      headers: SB_HDRS
-    })
-      .then(res => res.json())
-      .then(data => {
-        const prod = Array.isArray(data) ? data[0] : data;
+    productService.getProductById(id)
+      .then(res => {
+        const prod = res?.data?.data || res?.data;
         if (prod) {
           setProductData(prod);
           const looseVal = Boolean(
@@ -99,58 +91,30 @@ export default function EditProductPage() {
         : [];
       if (data.name_hi?.trim()) tagsList.push(`hi:${data.name_hi.trim()}`);
 
-      const discount = data.mrp > 0
-        ? Math.round(((parseFloat(data.mrp) - parseFloat(data.price)) / parseFloat(data.mrp)) * 100)
-        : 0;
+      const validUrls = imageUrls.filter(u => u && u.trim());
 
-      const productPayload = {
-        name: data.name.trim(),
-        slug: slugify(data.name.trim()),
-        description: data.description || null,
-        category_id: data.category_id || null,
-        brand: data.brand || null,
-        mrp: parseFloat(data.mrp),
-        price: parseFloat(data.price),
-        discount,
-        stock: parseInt(data.stock) || 0,
-        weight: data.weight ? String(data.weight) : null,
-        unit: data.unit || 'kg',
-        is_loose: Boolean(isLoose),
-        min_quantity: isLoose && data.min_quantity ? parseFloat(data.min_quantity) : null,
-        available: Boolean(data.available),
-        featured: Boolean(data.featured),
-        trending: Boolean(data.trending),
-        tags: tagsList,
-      };
-
-      // 1. Update product in Supabase
-      const res = await fetch(`${SB_URL}/rest/v1/products?id=eq.${id}`, {
-        method: 'PATCH',
-        headers: SB_HDRS,
-        body: JSON.stringify(productPayload),
+      await productService.updateProduct(id, {
+        name:         data.name,
+        description:  data.description || null,
+        category_id:  data.category_id || null,
+        brand:        data.brand || null,
+        mrp:          data.mrp,
+        price:        data.price,
+        stock:        data.stock || 0,
+        weight:       data.weight,
+        unit:         data.unit || 'kg',
+        is_loose:     isLoose,
+        min_quantity: data.min_quantity,
+        available:    data.available,
+        featured:     data.featured,
+        trending:     data.trending,
+        tags:         tagsList,
+        images:       validUrls,
       });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.message || `Error ${res.status}`);
-      }
-
-      // 2. Update product images
-      const validUrls = imageUrls.filter(u => u.trim());
-      await fetch(`${SB_URL}/rest/v1/product_images?product_id=eq.${id}`, {
-        method: 'DELETE',
-        headers: SB_HDRS,
-      });
-      if (validUrls.length > 0) {
-        const imgPayload = validUrls.map(url => ({ product_id: id, url, public_id: null }));
-        await fetch(`${SB_URL}/rest/v1/product_images`, {
-          method: 'POST',
-          headers: SB_HDRS,
-          body: JSON.stringify(imgPayload),
-        });
-      }
 
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['products-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['products-by-category'] });
       toast.success('Product updated successfully!');
       navigate('/admin/products');
     } catch (err) {

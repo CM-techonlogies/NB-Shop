@@ -30,7 +30,9 @@ export const useProducts = (params) => {
   return useQuery({
     queryKey: ['products', params],
     queryFn: () => productService.getProducts(params).then(r => extractPaginated(r)),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -38,7 +40,9 @@ export const useFeaturedProducts = () => {
   return useQuery({
     queryKey: ['products', 'featured'],
     queryFn: () => productService.getFeatured().then(r => extractArray(r)),
-    staleTime: 15 * 60 * 1000, // featured list changes rarely
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -46,7 +50,9 @@ export const useTrendingProducts = () => {
   return useQuery({
     queryKey: ['products', 'trending'],
     queryFn: () => productService.getTrending().then(r => extractArray(r)),
-    staleTime: 15 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -54,7 +60,9 @@ export const useNewArrivals = () => {
   return useQuery({
     queryKey: ['products', 'new-arrivals'],
     queryFn: () => productService.getNewArrivals().then(r => extractArray(r)),
-    staleTime: 15 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -63,7 +71,9 @@ export const useProductById = (id) => {
     queryKey: ['products', id],
     queryFn: () => productService.getProductById(id).then(r => r?.data?.data || r?.data || null),
     enabled: !!id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -72,8 +82,9 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories().then(r => extractArray(r)),
-    staleTime: 2 * 60 * 1000,   // 2 minutes — reflects admin changes quickly
-    refetchOnWindowFocus: true,  // refetch when user switches tabs
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -81,7 +92,9 @@ export const useAdminCategories = () => {
   return useQuery({
     queryKey: ['categories-admin'],
     queryFn: () => categoryService.getAllAdmin().then(r => extractArray(r)),
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -90,7 +103,9 @@ export const useCategoryBySlug = (slug) => {
     queryKey: ['categories', slug],
     queryFn: () => categoryService.getCategoryBySlug(slug).then(r => r?.data?.data || r?.data || null),
     enabled: !!slug,
-    staleTime: 60 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -103,7 +118,9 @@ export const useProductsByCategory = (categoryId, limit = 5) => {
         .getProducts({ category: categoryId, limit, available: true })
         .then(r => extractPaginated(r).data || []),
     enabled: !!categoryId,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
 
@@ -111,6 +128,8 @@ export const useBanners = () => {
   return useQuery({
     queryKey: ['public-banners'],
     queryFn: () => api.get('/banners').then(r => r.data?.data || r.data || []).catch(() => []),
-    staleTime: 2 * 60 * 1000,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 };
