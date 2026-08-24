@@ -95,14 +95,27 @@ export const categoryService = {
     return { data: Array.isArray(updated) ? updated[0] : updated };
   },
 
-  // Admin: Delete category
+  // Admin: Delete category (safely unlinks products first so foreign key doesn't block deletion)
   deleteCategory: async (id) => {
+    // 1. Unlink any products currently in this category
+    try {
+      await fetch(`${SB_URL}/rest/v1/products?category_id=eq.${id}`, {
+        method: 'PATCH',
+        headers: SB_HDRS,
+        body: JSON.stringify({ category_id: null }),
+      });
+    } catch (e) {
+      console.warn('Could not unlink products prior to category deletion:', e);
+    }
+
+    // 2. Delete the category
     const res = await fetch(`${SB_URL}/rest/v1/categories?id=eq.${id}`, {
       method: 'DELETE',
       headers: SB_HDRS,
     });
     if (!res.ok && res.status !== 204) {
-      throw new Error(`Failed to delete category (${res.status})`);
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Failed to delete category (${res.status})`);
     }
     return { data: {} };
   },
