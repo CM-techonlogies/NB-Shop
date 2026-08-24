@@ -179,61 +179,16 @@ export default function CheckoutPage() {
         <div className="lg:w-2/3">
           <div className="bg-white p-6 md:p-8 rounded-3xl shadow-card">
             
-            {/* Header + GPS Button */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 border-b pb-4">
+            {/* Header */}
+            <div className="mb-6 border-b pb-4">
               <h2 className="text-xl font-bold font-heading text-gray-800 flex items-center gap-2">
                 <span className="w-8 h-8 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm font-bold">1</span>
                 {t('delivery_details')}
               </h2>
-
-              <button
-                type="button"
-                onClick={handleDetectLocation}
-                disabled={isLocating}
-                className={`inline-flex items-center justify-center gap-2 font-bold px-4 py-2.5 rounded-2xl text-xs border shadow-2xs transition-all active:scale-95 disabled:opacity-50 ${
-                  gpsLocation
-                    ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
-                    : 'bg-amber-50 hover:bg-amber-100 text-amber-900 border-amber-300 animate-pulse'
-                }`}
-              >
-                {isLocating ? (
-                  <>
-                    <span className="w-3.5 h-3.5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></span>
-                    <span>{t('gps_locating')}</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-sm">📍</span>
-                    <span>{gpsLocation ? t('gps_attached') : t('detect_gps')}</span>
-                  </>
-                )}
-              </button>
             </div>
-
-            {/* GPS Status Banner */}
-            {gpsLocation ? (
-              <div className="mb-6 p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-800 font-medium">
-                <div className="flex items-center gap-2 truncate">
-                  <span className="text-base">🗺️</span>
-                  <span className="truncate">Coordinates: {gpsLocation.lat.toFixed(5)}, {gpsLocation.lng.toFixed(5)}</span>
-                </div>
-                <a
-                  href={gpsLocation.mapsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-emerald-700 font-bold underline hover:text-emerald-900 flex-shrink-0 ml-2"
-                >
-                  Verify on Maps ↗
-                </a>
-              </div>
-            ) : (
-              <div className="mb-6 p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-2 text-xs text-amber-900 font-medium">
-                <span className="text-base">⚠️</span>
-                <span>{t('gps_required_msg')}</span>
-              </div>
-            )}
             
             <form id="checkout-form" onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {/* Full Name & Phone Number */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('full_name')}</label>
@@ -257,6 +212,70 @@ export default function CheckoutPage() {
                     placeholder="9876543210"
                   />
                   {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>}
+                </div>
+              </div>
+
+              {/* GPS Location Detector (Placed right below Name & Phone) */}
+              <div className={`p-4 rounded-2xl border transition-all ${
+                gpsLocation
+                  ? 'bg-emerald-50 border-emerald-300'
+                  : 'bg-gradient-to-r from-amber-50 to-orange-50 border-amber-300 shadow-2xs'
+              }`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{gpsLocation ? '✅' : '📍'}</span>
+                      <span className="font-bold text-gray-900 text-sm">
+                        {gpsLocation ? t('gps_attached') : t('detect_gps')}
+                      </span>
+                      {!gpsLocation && (
+                        <span className="text-[10px] uppercase font-extrabold px-2 py-0.5 rounded-md bg-amber-200 text-amber-900">
+                          Required *
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {gpsLocation 
+                        ? `📍 GPS Coordinates attached: ${gpsLocation.lat.toFixed(5)}, ${gpsLocation.lng.toFixed(5)}`
+                        : t('gps_required_msg')}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-start sm:self-center">
+                    <button
+                      type="button"
+                      onClick={handleDetectLocation}
+                      disabled={isLocating}
+                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 font-bold px-4 py-2.5 rounded-xl text-xs border shadow-sm transition-all active:scale-95 disabled:opacity-50 ${
+                        gpsLocation
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600'
+                          : 'bg-primary-500 hover:bg-primary-600 text-white border-primary-500 animate-pulse'
+                      }`}
+                    >
+                      {isLocating ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                          <span>{t('gps_locating')}</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>{gpsLocation ? '🔄 Update GPS' : '📍 Detect GPS Location'}</span>
+                        </>
+                      )}
+                    </button>
+
+                    {gpsLocation && (
+                      <a
+                        href={gpsLocation.mapsUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-3 py-2.5 bg-white border border-emerald-300 rounded-xl text-emerald-700 hover:bg-emerald-50 text-xs font-bold whitespace-nowrap shadow-2xs"
+                        title="Verify on Google Maps"
+                      >
+                        Maps ↗
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
 
