@@ -59,7 +59,12 @@ export default function CategoriesAdminPage() {
       if (!res.ok) throw new Error(json?.message || `Error ${res.status}`);
       return json;
     },
-    onSuccess: () => { toast.success('Category created!'); closeModal(); loadCategories(); },
+    onSuccess: () => {
+      toast.success('Category created!');
+      closeModal();
+      loadCategories();                                                    // refresh admin list
+      queryClient.invalidateQueries({ queryKey: ['categories'] });         // bust customer cache
+    },
     onError: (e) => toast.error(e?.message || 'Failed to create category'),
   });
 
@@ -76,7 +81,12 @@ export default function CategoriesAdminPage() {
       if (!res.ok) throw new Error(json?.message || `Error ${res.status}`);
       return json;
     },
-    onSuccess: () => { toast.success('Category updated!'); closeModal(); loadCategories(); },
+    onSuccess: () => {
+      toast.success('Category updated!');
+      closeModal();
+      loadCategories();                                                    // refresh admin list
+      queryClient.invalidateQueries({ queryKey: ['categories'] });         // bust customer cache
+    },
     onError: (e) => toast.error(e?.message || 'Failed to update category'),
   });
 
@@ -88,7 +98,11 @@ export default function CategoriesAdminPage() {
       });
       if (!res.ok && res.status !== 204) throw new Error(`Error ${res.status}`);
     },
-    onSuccess: () => { toast.success('Category deleted!'); loadCategories(); },
+    onSuccess: () => {
+      toast.success('Category deleted!');
+      loadCategories();                                                    // refresh admin list
+      queryClient.invalidateQueries({ queryKey: ['categories'] });         // bust customer cache
+    },
     onError: (e) => toast.error(e?.message || 'Cannot delete: products may exist'),
   });
 

@@ -72,7 +72,8 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories().then(r => extractArray(r)),
-    staleTime: 60 * 60 * 1000, // categories change very rarely — cache for 1 hour
+    staleTime: 2 * 60 * 1000,   // 2 minutes — reflects admin changes quickly
+    refetchOnWindowFocus: true,  // refetch when user switches tabs
   });
 };
 
