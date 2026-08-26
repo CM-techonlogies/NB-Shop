@@ -153,6 +153,29 @@ export const getCategoryName = (categoryOrName, language, optionalDesc = '') => 
   return name;
 };
 
+// ── Clean category description (removes hi:... tag and gives clean text) ────────
+export const getCategoryDescription = (categoryOrDesc, language = 'en', categoryName = '') => {
+  let desc = '';
+  let name = categoryName;
+  if (typeof categoryOrDesc === 'object' && categoryOrDesc !== null) {
+    desc = categoryOrDesc.description || '';
+    name = categoryOrDesc.name || categoryName || '';
+  } else {
+    desc = String(categoryOrDesc || '');
+  }
+
+  // Strip out "hi:..." tag from description so it never shows raw to users
+  const cleanDesc = desc.replace(/hi:\s*[^|;\n\]]+/gi, '').trim();
+
+  if (cleanDesc) return cleanDesc;
+
+  if (language === 'hi') {
+    const hiName = getCategoryName(name, 'hi');
+    return `${hiName} का ताज़ा और बेहतरीन कलेक्शन`;
+  }
+  return `Explore our fresh collection of ${(name || '').toLowerCase()}`;
+};
+
 export const TRANSLATIONS = {
   en: {
     // Navigation

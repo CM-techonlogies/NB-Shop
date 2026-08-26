@@ -6,7 +6,7 @@ import ProductGrid from '../../components/product/ProductGrid';
 import { STORE_NAME } from '../../constants';
 import Spinner from '../../components/ui/Spinner';
 import { useLanguageStore } from '../../store/languageStore';
-import { getCategoryName } from '../../constants/translations';
+import { getCategoryName, getCategoryDescription } from '../../constants/translations';
 
 export default function CategoryPage() {
   const { slug } = useParams();
@@ -24,9 +24,15 @@ export default function CategoryPage() {
     enabled: !!categoryId
   });
 
-  const products = productsData?.data || (Array.isArray(productsData) ? productsData : []);
+  const products = Array.isArray(productsData) 
+    ? productsData 
+    : (Array.isArray(productsData?.data) ? productsData.data : []);
 
-  if (catLoading) return <div className="flex justify-center py-20"><Spinner size="lg" /></div>;
+  if (catLoading) return (
+    <div className="flex justify-center items-center py-32">
+      <Spinner size="lg" />
+    </div>
+  );
 
   if (!category) return (
     <div className="text-center py-20">
@@ -51,7 +57,7 @@ export default function CategoryPage() {
           <div className="text-center md:text-left">
             <h1 className="text-3xl md:text-5xl font-black font-heading mb-2">{catDisplayName}</h1>
             <p className="text-white/80 text-lg">
-              {category.description || (language === 'hi' ? `${catDisplayName} का ताज़ा और बेहतरीन कलेक्शन` : `Explore our fresh collection of ${category.name.toLowerCase()}`)}
+              {getCategoryDescription(category, language, category.name)}
             </p>
           </div>
         </div>

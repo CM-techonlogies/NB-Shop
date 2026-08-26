@@ -5,7 +5,7 @@ import { useProductsByCategory } from '../../hooks/useProducts';
 import ProductCard from '../product/ProductCard';
 import { SkeletonProductCard } from '../ui/Skeleton';
 import { useLanguageStore } from '../../store/languageStore';
-import { getCategoryName } from '../../constants/translations';
+import { getCategoryName, getCategoryDescription } from '../../constants/translations';
 
 const CATEGORY_EMOJIS = {
   'Rice & Atta': '🌾', 'Oil & Ghee': '🫙', 'Spices': '🌶️',
@@ -107,7 +107,9 @@ export default function CategoryProductSection({ category, index, limit = 5, eag
               {categoryDisplayName}
             </h2>
             {category.description && (
-              <p className="text-xs text-gray-500 mt-0.5 hidden md:block">{category.description}</p>
+              <p className="text-xs text-gray-500 mt-0.5 hidden md:block">
+                {getCategoryDescription(category, language, category.name)}
+              </p>
             )}
           </div>
         </div>
