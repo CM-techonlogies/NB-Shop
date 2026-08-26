@@ -80,5 +80,26 @@ export default {
       }
     },
   },
-  plugins: [],
+  plugins: [
+    // iOS safe-area-inset utilities: pb-safe, pt-safe, mb-safe, mt-safe
+    function({ addUtilities }) {
+      addUtilities({
+        '.pb-safe': {
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        },
+        '.pt-safe': {
+          paddingTop: 'env(safe-area-inset-top)',
+        },
+        '.mb-safe': {
+          marginBottom: 'env(safe-area-inset-bottom)',
+        },
+        '.mt-safe': {
+          marginTop: 'env(safe-area-inset-top)',
+        },
+        '.h-safe-bottom': {
+          height: 'env(safe-area-inset-bottom)',
+        },
+      });
+    },
+  ],
 };

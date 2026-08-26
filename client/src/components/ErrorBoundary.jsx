@@ -105,7 +105,8 @@ export default class ErrorBoundary extends React.Component {
     // Clear the flag so next chunk error also gets one auto-attempt
     sessionStorage.removeItem(CHUNK_FAIL_KEY);
     this.setState({ hasError: false, error: null, isChunkError: false });
-    window.location.reload(true);
+    // iOS Safari crashes with reload(true) — use plain reload() instead
+    window.location.reload();
   }
 
   handleGoBack() {

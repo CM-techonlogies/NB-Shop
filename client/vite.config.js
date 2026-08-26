@@ -9,10 +9,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.jpg'],
       workbox: {
+        // NOTE: Do NOT use skipWaiting on iOS — it causes mid-navigation SW takeover
+        // which results in "A problem repeatedly occurred" crash on Safari.
         clientsClaim: true,
-        skipWaiting: true,
         cleanupOutdatedCaches: true,
-        navigateFallback: null,
+        // iOS PWA needs a fallback HTML so navigation doesn't black-screen crash
+        navigateFallback: '/index.html',
+        navigateFallbackDenylist: [/^\/api/, /^\/rest/, /\.(?:png|jpg|jpeg|webp|svg|gif|ico|css|js)$/i],
         // Don't precache large chunks — they'll be cached on first use
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
@@ -22,7 +25,7 @@ export default defineConfig({
             handler: 'NetworkFirst',
             options: {
               cacheName: 'html-pages',
-              networkTimeoutSeconds: 5,
+              networkTimeoutSeconds: 3,
               expiration: { maxEntries: 5, maxAgeSeconds: 24 * 60 * 60 },
               cacheableResponse: { statuses: [0, 200] },
             },
@@ -79,6 +82,9 @@ export default defineConfig({
         theme_color: '#FF6B00',
         background_color: '#FFF8F0',
         display: 'standalone',
+        // iOS Safari requires start_url for proper PWA install
+        start_url: '/',
+        scope: '/',
         icons: [
           { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
           { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
