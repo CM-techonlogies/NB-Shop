@@ -6,7 +6,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' = do NOT auto-reload when new SW is ready.
+      // 'autoUpdate' was silently calling window.location.reload() on every deploy,
+      // causing the "Home tab = page reload" bug on iOS.
+      registerType: 'prompt',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.jpg'],
       workbox: {
         // skipWaiting: new SW takes over immediately (needed to replace the broken old SW on iOS)
