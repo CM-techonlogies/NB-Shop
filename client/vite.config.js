@@ -9,8 +9,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.jpg'],
       workbox: {
-        // NOTE: Do NOT use skipWaiting on iOS — it causes mid-navigation SW takeover
-        // which results in "A problem repeatedly occurred" crash on Safari.
+        // skipWaiting: new SW takes over immediately (needed to replace the broken old SW on iOS)
+        skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
         // iOS PWA needs a fallback HTML so navigation doesn't black-screen crash
