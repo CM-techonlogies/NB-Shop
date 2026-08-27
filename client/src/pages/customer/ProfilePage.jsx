@@ -31,8 +31,8 @@ const EMPTY_ADDRESS = {
   phone: '',
   address: '',
   landmark: '',
-  city: 'Abu Road',
-  pincode: '307026',
+  city: 'Swroopganj',
+  pincode: '307023',
   isDefault: false,
 };
 
@@ -151,8 +151,8 @@ export default function ProfilePage() {
       phone: addr.phone || '',
       address: addr.address || '',
       landmark: addr.landmark || '',
-      city: addr.city || 'Abu Road',
-      pincode: addr.pincode || '307026',
+      city: addr.city || 'Swroopganj',
+      pincode: addr.pincode || '307023',
       isDefault: Boolean(addr.is_default),
     });
     setIsAddressModalOpen(true);
@@ -458,7 +458,7 @@ export default function ProfilePage() {
       <div className="bg-gray-50 rounded-3xl p-5 border border-gray-200 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
         <div>
           <p className="text-sm font-bold text-gray-800">🏪 {STORE_NAME} (M/s NAVARAM BHUBAJI)</p>
-          <p className="text-xs text-gray-500 mt-0.5">Abu Road, Rajasthan • Daily 8:00 AM – 10:00 PM</p>
+          <p className="text-xs text-gray-500 mt-0.5">Main market Swroopganj 307023 • Daily 8:00 AM – 10:00 PM</p>
         </div>
         <a
           href={`https://wa.me/${OWNER_WHATSAPP}`}

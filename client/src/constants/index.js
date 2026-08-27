@@ -60,4 +60,4 @@ export const SAMPLE_CATEGORIES = [
 ];
 
 export const STORE_NAME = import.meta.env.VITE_STORE_NAME || 'NB Shop';
-export const OWNER_WHATSAPP = import.meta.env.VITE_OWNER_WHATSAPP || '919876543210';
+export const OWNER_WHATSAPP = import.meta.env.VITE_OWNER_WHATSAPP || '917014747437';

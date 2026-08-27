@@ -19,11 +19,11 @@ export default function ContactPage() {
   const settings = settingsData || {};
 
   const storeName    = settings.store_name    || settings.storeName    || STORE_NAME;
-  const storePhone   = settings.store_phone   || settings.storePhone   || '8306050983';
-  const storeAddress = settings.store_address || settings.storeAddress || 'Main Market, Kirana Store';
+  const storePhone   = settings.store_phone   || settings.storePhone   || '7014747437';
+  const storeAddress = settings.store_address || settings.storeAddress || 'Main market Swroopganj 307023';
   const hours        = settings.business_hours|| settings.businessHours|| 'Mon - Sun: 8:00 AM - 10:00 PM';
-  const whatsappNum  = settings.whatsapp_phone|| OWNER_WHATSAPP        || '918306050983';
-  const upiId        = settings.upi_id        || settings.upiId        || '8306050983@ptsbi';
+  const whatsappNum  = settings.whatsapp_phone|| OWNER_WHATSAPP        || '917014747437';
+  const upiId        = settings.upi_id        || settings.upiId        || '7014747437@ptsbi';
 
   const cleanWaNumber = whatsappNum.replace(/\D/g, '');
   const waUrl = `https://wa.me/${cleanWaNumber.startsWith('91') ? cleanWaNumber : '91' + cleanWaNumber}?text=${encodeURIComponent('Hi ' + storeName + ', I need help with my order.')}`;
