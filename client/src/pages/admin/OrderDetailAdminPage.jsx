@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
-import { useOrderById, useUpdateOrderStatus } from '../../hooks/useOrders';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supaOrders } from '../../services/supabaseAdmin';
 import { STORE_NAME } from '../../constants';
 import Spinner from '../../components/ui/Spinner';
 import toast from 'react-hot-toast';
@@ -34,11 +35,33 @@ const fmtDate = (d) => {
 
 export default function OrderDetailAdminPage() {
   const { id } = useParams();
-  const { data: orderData, isLoading } = useOrderById(id);
-  const updateStatusMutation = useUpdateOrderStatus();
+  const queryClient = useQueryClient();
 
-  // Handle nested data shape
-  const order = orderData?.data ?? orderData;
+  // ── Fetch order directly from Supabase (not Render backend) ──────────────
+  // This fixes "Order not found" which happened because Render backend
+  // auth (Clerk) was failing — Supabase direct fetch always works.
+  const { data: order, isLoading, dataUpdatedAt } = useQuery({
+    queryKey: ['admin-order-detail', id],
+    queryFn: () => supaOrders.getById(id),
+    enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    // ✅ Auto-refresh every 60 seconds to catch new status changes
+    refetchInterval: 60 * 1000,
+    refetchIntervalInBackground: false,
+  });
+
+  // Supabase-direct status update
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id: orderId, status }) => supaOrders.updateStatus(orderId, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-order-detail', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin-orders'] });
+      toast.success('Order status updated!');
+      setStatusNote('');
+    },
+    onError: () => toast.error('Failed to update status'),
+  });
 
   const [selectedStatus, setSelectedStatus] = useState('');
   const [statusNote, setStatusNote] = useState('');
@@ -49,6 +72,11 @@ export default function OrderDetailAdminPage() {
     }
   }, [order?.status]);
 
+  // Last refreshed time
+  const lastRefreshed = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+    : null;
+
   if (isLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
@@ -57,7 +85,7 @@ export default function OrderDetailAdminPage() {
     );
   }
 
-  if (!order || !order.id && !order._id) {
+  if (!order || (!order.id && !order._id)) {
     return (
       <div className="text-center py-20">
         <h2 className="text-2xl font-bold mb-4">Order not found</h2>
@@ -86,19 +114,7 @@ export default function OrderDetailAdminPage() {
   const handleUpdateStatus = (e) => {
     e.preventDefault();
     if (!selectedStatus) return;
-
-    updateStatusMutation.mutate(
-      { id: orderId, status: selectedStatus, note: statusNote },
-      {
-        onSuccess: () => {
-          toast.success('Order status updated!');
-          setStatusNote('');
-        },
-        onError: (err) => {
-          toast.error(err?.response?.data?.message || 'Failed to update status');
-        },
-      }
-    );
+    updateStatusMutation.mutate({ id: orderId, status: selectedStatus, note: statusNote });
   };
 
   return (
@@ -121,7 +137,18 @@ export default function OrderDetailAdminPage() {
           </h1>
           <p className="text-gray-500 text-sm mt-1">Placed on {fmtDate(createdAt)}</p>
         </div>
-        <div>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+          {lastRefreshed && (
+            <span className="text-xs text-gray-400 font-medium">
+              🕐 Updated at {lastRefreshed}
+            </span>
+          )}
+          <button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-order-detail', id] })}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-lg transition-all active:scale-95"
+          >
+            🔄 Refresh
+          </button>
           <span
             className={`px-4 py-2 rounded-full text-xs font-bold border uppercase tracking-wider ${
               STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700 border-gray-200'

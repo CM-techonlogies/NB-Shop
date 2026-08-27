@@ -90,7 +90,7 @@ export const supaOrders = {
   },
 
   getById: (id) =>
-    supaFetch(`/orders?select=*,users(id,name,email,phone)&id=eq.${id}`).then(
+    supaFetch(`/orders?select=*,users(id,name,email,phone),order_items(id,product_id,name,qty,price,image)&id=eq.${id}`).then(
       (d) => (Array.isArray(d) ? d[0] : d)
     ),
 

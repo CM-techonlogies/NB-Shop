@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supaOrders } from '../../services/supabaseAdmin';
 import { STORE_NAME } from '../../constants';
 import Spinner from '../../components/ui/Spinner';
@@ -36,15 +36,23 @@ const fmtDate = (d) => {
 export default function OrdersAdminPage() {
   const [activeTab, setActiveTab] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const queryClient = useQueryClient();
 
   // ── Fetch directly from Supabase (bypasses Render auth) ──────────────────
-  const { data, isLoading, isError } = useQuery({
+  const { data, isLoading, isError, dataUpdatedAt } = useQuery({
     queryKey: ['admin-orders', activeTab],
     queryFn: () => supaOrders.getAll(activeTab || undefined),
     staleTime: 0,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
+    // ✅ Auto-refresh every 60 seconds — new orders appear without manual reload
+    refetchInterval: 60 * 1000,
+    refetchIntervalInBackground: false,
   });
+
+  const lastRefreshed = dataUpdatedAt
+    ? new Date(dataUpdatedAt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+    : null;
 
   const orders = Array.isArray(data) ? data : [];
 
@@ -74,29 +82,41 @@ export default function OrdersAdminPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
-          <p className="text-sm text-gray-500">View and manage customer orders</p>
+          <p className="text-sm text-gray-500 flex items-center gap-2 mt-0.5">
+            View and manage customer orders
+            {lastRefreshed && (
+              <span className="text-xs text-gray-400">· 🕐 Updated at {lastRefreshed}</span>
+            )}
+          </p>
         </div>
 
-        {/* Search Input Box */}
-        <div className="relative min-w-[280px] md:min-w-[360px]">
-          <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 text-sm">
-            🔍
-          </span>
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by Invoice # (e.g. 10051), Customer..."
-            className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all shadow-xs"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm('')}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 font-bold text-xs"
-            >
-              ✕
-            </button>
-          )}
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => queryClient.invalidateQueries({ queryKey: ['admin-orders'] })}
+            className="flex items-center gap-1.5 px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-all active:scale-95 whitespace-nowrap"
+          >
+            🔄 Refresh
+          </button>
+          <div className="relative min-w-[280px] md:min-w-[360px]">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400 text-sm">
+              🔍
+            </span>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by Invoice # (e.g. 10051), Customer..."
+              className="w-full pl-10 pr-9 py-2.5 bg-white border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 transition-all shadow-xs"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm('')}
+                className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 font-bold text-xs"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
