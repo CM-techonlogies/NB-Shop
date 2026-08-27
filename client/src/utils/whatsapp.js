@@ -141,15 +141,15 @@ export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
 Order ID : *${invoiceId}*
 Date : ${dateFormatted}
 
-*SELECTED ORDER OPTION*
-👉 *${paymentOption.badge}*
-
- *ORDER ITEMS*
+📦 *ORDER ITEMS*
 
 ${itemLines}
 
 *TOTAL AMOUNT : ₹${total.toFixed(0)}*
 Delivery : ${delivery === 0 ? 'FREE' : `₹${delivery.toFixed(0)}`}
+
+*ORDER / PAYMENT OPTION*
+👉 *${paymentOption.badge}*
 
 *CUSTOMER DETAILS*
 
