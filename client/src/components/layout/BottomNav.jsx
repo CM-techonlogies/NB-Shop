@@ -1,11 +1,12 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../../hooks/useCart';
 import { useUser } from '@clerk/clerk-react';
 import { useLanguageStore } from '../../store/languageStore';
 
 export default function BottomNav() {
   const location = useLocation();
+  const navigate = useNavigate();
   const { itemCount } = useCart();
   const { isSignedIn } = useUser();
   const { t } = useLanguageStore();
@@ -21,15 +22,29 @@ export default function BottomNav() {
   // Don't show on admin pages
   if (location.pathname.startsWith('/admin')) return null;
 
+  const handleNavClick = (e, path) => {
+    e.preventDefault();
+    const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
+    // If already on this tab, do nothing — prevents iOS navigate fetch → reload
+    if (isActive) return;
+    navigate(path);
+  };
+
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] pb-safe transition-colors">
       <div className="flex items-center justify-around h-16">
         {navItems.map(({ path, icon, label, isCart }) => {
           const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
           return (
-            <Link key={path} to={path} className={`flex flex-col items-center gap-0.5 px-3 py-2 relative transition-all duration-200 ${
-              isActive ? 'text-primary-500 scale-110' : 'text-gray-500 dark:text-gray-400'
-            }`}>
+            // Use <a> with onClick so we intercept BEFORE iOS makes a navigate request
+            <a
+              key={path}
+              href={path}
+              onClick={(e) => handleNavClick(e, path)}
+              className={`flex flex-col items-center gap-0.5 px-3 py-2 relative transition-all duration-200 ${
+                isActive ? 'text-primary-500 scale-110' : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
               <span className="text-xl relative">
                 {icon}
                 {isCart && itemCount > 0 && (
@@ -39,10 +54,11 @@ export default function BottomNav() {
                 )}
               </span>
               <span className={`text-[10px] font-medium ${isActive ? 'font-bold' : ''}`}>{label}</span>
-            </Link>
+            </a>
           );
         })}
       </div>
     </nav>
   );
 }
+

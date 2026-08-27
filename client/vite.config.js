@@ -12,27 +12,23 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'logo.jpg'],
       workbox: {
-        // skipWaiting: new SW takes over immediately (needed to replace the broken old SW on iOS)
-        skipWaiting: true,
+        // Do NOT use skipWaiting — causes mid-navigation SW takeover on iOS → reload
+        // clientsClaim is still fine (claims pages on new install, not on update)
         clientsClaim: true,
         cleanupOutdatedCaches: true,
-        // iOS PWA needs a fallback HTML so navigation doesn't black-screen crash
+        // navigateFallback handles all SPA routes offline — Workbox serves this from
+        // precache for navigate requests WITHOUT a separate runtime NetworkFirst rule
         navigateFallback: '/index.html',
         navigateFallbackDenylist: [/^\/api/, /^\/rest/, /\.(?:png|jpg|jpeg|webp|svg|gif|ico|css|js)$/i],
         // Don't precache large chunks — they'll be cached on first use
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
-          // HTML pages — always network first (prevents stale chunk errors)
-          {
-            urlPattern: ({ request }) => request.mode === 'navigate',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'html-pages',
-              networkTimeoutSeconds: 3,
-              expiration: { maxEntries: 5, maxAgeSeconds: 24 * 60 * 60 },
-              cacheableResponse: { statuses: [0, 200] },
-            },
-          },
+          // ⚠️ NO navigate handler here — we intentionally removed it.
+          // iOS Safari treats Link clicks as navigate fetches; a SW NetworkFirst
+          // handler for navigate mode returns fresh HTML → full page reload.
+          // Workbox's built-in precache navigation routing (via navigateFallback)
+          // handles offline fallback correctly without causing reloads.
+
           // JS/CSS assets — CacheFirst (hashed filenames = safe forever)
           {
             urlPattern: /\/assets\/.+\.(js|css)$/i,
