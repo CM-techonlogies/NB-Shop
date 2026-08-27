@@ -116,8 +116,8 @@ export default function CheckoutPage() {
       };
 
       const paymentLabel = paymentMethod === 'cod' 
-        ? `Cash on Delivery${codChangeNote ? ` (Change needed: ${codChangeNote})` : ''}` 
-        : 'Store Pickup (Pay at Store)';
+        ? `Cash on Delivery (COD)${codChangeNote ? ` (Change needed: ${codChangeNote})` : ''}` 
+        : 'Store Pickup (Pick up from Store)';
       
       const formattedNotes = data.notes 
         ? `[Payment Mode: ${paymentLabel}] ${data.notes}` 
@@ -148,7 +148,12 @@ export default function CheckoutPage() {
       // C2 FIX: guard against undefined orderId before navigating
       clearCart();
       toast.success('Order placed successfully! 🎉');
-      sendOrderToOwnerWhatsApp(order, cart, shippingAddress);
+      sendOrderToOwnerWhatsApp({
+        ...order,
+        notes: formattedNotes,
+        payment_method: paymentMethod,
+        cod_change_note: codChangeNote,
+      }, cart, shippingAddress);
       const targetPath = orderId ? `/order/${orderId}` : '/orders';
       setTimeout(() => navigate(targetPath), 500);
     } catch (error) {

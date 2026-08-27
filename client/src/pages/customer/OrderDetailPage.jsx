@@ -5,7 +5,7 @@ import { useOrderById, useUploadPaymentScreenshot } from '../../hooks/useOrders'
 import { useCart } from '../../hooks/useCart';
 import OrderTimeline from '../../components/order/OrderTimeline';
 import { STORE_NAME } from '../../constants';
-import { sendOrderToOwnerWhatsApp } from '../../utils/whatsapp';
+import { sendOrderToOwnerWhatsApp, getOrderPaymentOption } from '../../utils/whatsapp';
 import Spinner from '../../components/ui/Spinner';
 import toast from 'react-hot-toast';
 
@@ -269,9 +269,42 @@ export default function OrderDetailPage() {
         {/* Sidebar Info */}
         <div className="space-y-6">
 
+          {/* Order & Payment Option Card */}
+          {(() => {
+            const paymentOption = getOrderPaymentOption(order);
+            return (
+              <div className="bg-white p-6 rounded-2xl shadow-card">
+                <h3 className="font-bold font-heading text-lg mb-3 flex items-center justify-between">
+                  <span>Selected Option</span>
+                  <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${paymentOption.color}`}>
+                    {paymentOption.type === 'pickup' ? '🏪 Store Pickup' : '💵 Cash on Delivery'}
+                  </span>
+                </h3>
+                <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100 space-y-1">
+                  <p className="text-xs font-bold text-gray-900">{paymentOption.badge}</p>
+                  <p className="text-xs text-gray-600 leading-relaxed">{paymentOption.detail}</p>
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Delivery Address */}
           <div className="bg-white p-6 rounded-2xl shadow-card">
-            <h3 className="font-bold font-heading text-lg mb-4">Delivery Address</h3>
+            {(() => {
+              const paymentOption = getOrderPaymentOption(order);
+              return (
+                <>
+                  <h3 className="font-bold font-heading text-lg mb-4">
+                    {paymentOption.type === 'pickup' ? 'Pickup Information' : 'Delivery Address'}
+                  </h3>
+                  {paymentOption.type === 'pickup' && (
+                    <div className="mb-3 p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs font-medium">
+                      🏪 <strong>Store Pickup Selected:</strong> You can pick up your packed items directly from the store.
+                    </div>
+                  )}
+                </>
+              );
+            })()}
             <div className="text-sm text-gray-600 space-y-1">
               <p className="font-bold text-gray-900">{address.fullName || address.name || ''}</p>
               <p>{address.addressLine || address.address || '—'}</p>

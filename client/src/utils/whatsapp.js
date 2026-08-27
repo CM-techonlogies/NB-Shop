@@ -37,6 +37,49 @@ const formatOrderDate = (dStr) => {
  * @param {object} address - shipping address object
  * @returns {string} WhatsApp API URL with encoded message
  */
+/**
+ * Parse payment/pickup option from order object or notes
+ */
+export const getOrderPaymentOption = (order) => {
+  const notes = order?.notes || '';
+  const method = (order?.payment_method || order?.paymentMethod || '').toLowerCase();
+
+  if (method === 'pickup' || /store pickup|pick up from store|pay at store/i.test(notes)) {
+    return {
+      type: 'pickup',
+      title: 'Store Pickup',
+      badge: '🏪 Confirm Order & Pick up from Store',
+      shortBadge: '🏪 Store Pickup',
+      detail: 'Customer will pick up packed order from store & pay (Cash/UPI) on pickup',
+      color: 'bg-amber-100 text-amber-800 border-amber-200',
+    };
+  }
+
+  // Extract change note if present
+  const changeMatch = notes.match(/Change needed:\s*([^\]\)]+)/i) || notes.match(/Change:\s*([^\]\)]+)/i) || (order?.cod_change_note ? [null, order.cod_change_note] : null);
+  const changeText = changeMatch ? changeMatch[1].trim() : null;
+
+  return {
+    type: 'cod',
+    title: 'Cash on Delivery (COD)',
+    badge: `💵 Cash on Delivery (COD)${changeText ? ` [Need Change: ${changeText}]` : ''}`,
+    shortBadge: `💵 COD${changeText ? ` (${changeText})` : ''}`,
+    changeNote: changeText,
+    detail: changeText
+      ? `Pay in cash on delivery (Customer requested: ${changeText})`
+      : 'Pay in cash directly to delivery agent at doorstep',
+    color: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  };
+};
+
+/**
+ * Build the WhatsApp URL for sending order details to the owner.
+ * Works seamlessly across iOS Safari, Android Chrome, and Desktop.
+ * @param {object} order   - Supabase order object (or plain order data)
+ * @param {Array}  items   - cart items or order_items
+ * @param {object} address - shipping address object
+ * @returns {string} WhatsApp API URL with encoded message
+ */
 export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
   const phone = (OWNER_PHONE || '').replace(/\D/g, '');
   if (!phone) return null;
@@ -59,6 +102,7 @@ export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
   const mapsUrl  = address.mapsUrl || address.maps_url || (address.latitude && address.longitude ? `https://maps.google.com/?q=${address.latitude},${address.longitude}` : null);
 
   const dateFormatted = formatOrderDate(order?.created_at || order?.createdAt);
+  const paymentOption = getOrderPaymentOption(order);
 
   const itemLines = items.map((item) => {
     const isLoose = item.customQty !== undefined || item.is_loose;
@@ -87,11 +131,18 @@ export const buildOwnerWhatsAppUrl = (order, items = [], address = {}) => {
     city ? ` ${city}${pincode ? ` - ${pincode}` : ''}` : pincode ? ` ${pincode}` : null
   ].filter(Boolean).join('\n');
 
+  // Clean customer custom note (remove [Payment Mode: ...] prefix)
+  const rawNotes = order?.notes || '';
+  const cleanCustomerNote = rawNotes.replace(/\[Payment Mode:[^\]]+\]/gi, '').trim();
+
   const message =
 `*${STORE_NAME}*
 
 Order ID : *${invoiceId}*
 Date : ${dateFormatted}
+
+*SELECTED ORDER OPTION*
+👉 *${paymentOption.badge}*
 
  *ORDER ITEMS*
 
@@ -107,6 +158,7 @@ Customer : ${name}
 
 ${addressLines}
 ${locationSection}
+${cleanCustomerNote ? `\n*Note :* ${cleanCustomerNote}` : ''}
 
 Please prepare this order.`;
 

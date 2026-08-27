@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet-async';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supaOrders } from '../../services/supabaseAdmin';
 import { STORE_NAME } from '../../constants';
+import { getOrderPaymentOption } from '../../utils/whatsapp';
 import Spinner from '../../components/ui/Spinner';
 import toast from 'react-hot-toast';
 
@@ -111,6 +112,8 @@ export default function OrderDetailAdminPage() {
   const customerName = address.fullName || address.name || order.users?.name || 'Customer';
   const customerPhone = address.phone || order.users?.phone || '';
 
+  const paymentOption = getOrderPaymentOption(order);
+
   const handleUpdateStatus = (e) => {
     e.preventDefault();
     if (!selectedStatus) return;
@@ -149,6 +152,11 @@ export default function OrderDetailAdminPage() {
           >
             🔄 Refresh
           </button>
+          <span
+            className={`px-3 py-1.5 rounded-full text-xs font-bold border uppercase tracking-wider ${paymentOption.color}`}
+          >
+            {paymentOption.type === 'pickup' ? '🏪 Store Pickup' : '💵 COD'}
+          </span>
           <span
             className={`px-4 py-2 rounded-full text-xs font-bold border uppercase tracking-wider ${
               STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700 border-gray-200'
@@ -309,6 +317,26 @@ export default function OrderDetailAdminPage() {
         {/* Right / Sidebar Column */}
         <div className="space-y-6">
 
+          {/* Order Option & Payment Method Card */}
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h3 className="font-bold text-base text-gray-900 mb-3 flex items-center justify-between">
+              <span>Order Option</span>
+              <span className={`px-2.5 py-1 rounded-lg text-xs font-bold border ${paymentOption.color}`}>
+                {paymentOption.type === 'pickup' ? '🏪 Store Pickup' : '💵 COD'}
+              </span>
+            </h3>
+            <div className="bg-gray-50 rounded-xl p-3.5 border border-gray-100 space-y-1.5">
+              <p className="text-xs font-bold text-gray-900">{paymentOption.badge}</p>
+              <p className="text-xs text-gray-600 leading-relaxed">{paymentOption.detail}</p>
+              {paymentOption.changeNote && (
+                <div className="mt-2 pt-2 border-t border-gray-200 text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
+                  <span>💵</span>
+                  <span>Change Requested: <strong>{paymentOption.changeNote}</strong></span>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Customer Details */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="font-bold text-base text-gray-900 mb-4">Customer Details</h3>
@@ -330,7 +358,14 @@ export default function OrderDetailAdminPage() {
 
           {/* Shipping Address */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="font-bold text-base text-gray-900 mb-4">Shipping Address</h3>
+            <h3 className="font-bold text-base text-gray-900 mb-4">
+              {paymentOption.type === 'pickup' ? 'Customer Pickup Info' : 'Shipping Address'}
+            </h3>
+            {paymentOption.type === 'pickup' && (
+              <div className="mb-3 p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-amber-900 text-xs font-medium">
+                🏪 <strong>Store Pickup Order:</strong> Customer selected to pick up their packed order from your shop.
+              </div>
+            )}
             <div className="text-xs text-gray-600 space-y-1 font-medium">
               <p className="font-bold text-gray-800">{address.fullName || address.name || ''}</p>
               <p>{address.addressLine || address.address || '—'}</p>

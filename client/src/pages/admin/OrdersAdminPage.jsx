@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supaOrders } from '../../services/supabaseAdmin';
 import { STORE_NAME } from '../../constants';
+import { getOrderPaymentOption } from '../../utils/whatsapp';
 import Spinner from '../../components/ui/Spinner';
 
 const TABS = [
@@ -151,6 +152,7 @@ export default function OrdersAdminPage() {
                   <th className="px-6 py-4">Invoice</th>
                   <th className="px-6 py-4">Date</th>
                   <th className="px-6 py-4">Customer</th>
+                  <th className="px-6 py-4">Option / Method</th>
                   <th className="px-6 py-4">Total</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Action</th>
@@ -159,7 +161,7 @@ export default function OrdersAdminPage() {
               <tbody className="divide-y divide-gray-100 text-sm">
                 {filteredOrders.length === 0 ? (
                   <tr>
-                    <td colSpan="6" className="text-center py-12 text-gray-400">
+                    <td colSpan="7" className="text-center py-12 text-gray-400">
                       {searchTerm.trim() ? (
                         <div>
                           <span className="text-3xl block mb-2">🔍</span>
@@ -176,11 +178,17 @@ export default function OrdersAdminPage() {
                   const invoiceId = order.invoice_id || order.invoiceId || orderId?.substring(0, 8).toUpperCase();
                   const customer  = order.users?.name || order.customerName || '—';
                   const total     = parseFloat(order.total ?? order.totalAmount ?? 0);
+                  const opt       = getOrderPaymentOption(order);
                   return (
                     <tr key={orderId} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 font-semibold text-indigo-600">#{invoiceId}</td>
                       <td className="px-6 py-4 text-gray-500">{fmtDate(order.created_at || order.createdAt)}</td>
                       <td className="px-6 py-4 font-medium text-gray-900">{customer}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border ${opt.color}`}>
+                          {opt.shortBadge}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 font-bold text-gray-900">₹{total.toFixed(0)}</td>
                       <td className="px-6 py-4">
                         <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
