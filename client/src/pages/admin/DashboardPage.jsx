@@ -27,12 +27,22 @@ export default function DashboardPage() {
       const today = new Date(); today.setHours(0, 0, 0, 0);
       const allOrders = await supaOrders.getAll();
       const todayOrders = allOrders.filter(o => new Date(o.created_at) >= today);
+
+      const allProducts = Array.isArray(products) ? products : [];
+      const lowStockProducts = allProducts
+        .filter(p => {
+          const s = parseInt(p.stock, 10);
+          return isNaN(s) || s < 10;
+        })
+        .sort((a, b) => (parseInt(a.stock, 10) || 0) - (parseInt(b.stock, 10) || 0));
+
       return {
         ...orderStats,
         todaySales: todayOrders.reduce((s, o) => s + (parseFloat(o.total) || 0), 0),
         todayOrders: todayOrders.length,
         totalCustomers: customers.length,
-        totalProducts: products.length,
+        totalProducts: allProducts.length,
+        lowStockProducts,
         weeklyOrders: allOrders,  // last 7 days computed in component
       };
     },
@@ -240,26 +250,32 @@ export default function DashboardPage() {
                 <th className="px-6 py-3.5">Category</th>
                 <th className="px-6 py-3.5">Current Stock</th>
                 <th className="px-6 py-3.5">Status</th>
+                <th className="px-6 py-3.5 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-xs font-medium">
               {lowStockItems.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-8 text-gray-400">
+                  <td colSpan="5" className="text-center py-8 text-gray-400">
                     🎉 All products have sufficient stock!
                   </td>
                 </tr>
               ) : (
-                lowStockItems.map((item) => {
+                lowStockItems.slice(0, 15).map((item) => {
                   const catName = item.categories?.name || 'General';
-                  const isOutOfStock = item.stock <= 0;
-                  const isCritical = item.stock <= 3;
+                  const stockNum = parseInt(item.stock, 10) || 0;
+                  const isOutOfStock = stockNum <= 0;
+                  const isCritical = stockNum > 0 && stockNum <= 3;
 
                   return (
                     <tr key={item.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 font-bold text-gray-900">{item.name}</td>
                       <td className="px-6 py-4 text-gray-500">{catName}</td>
-                      <td className="px-6 py-4 font-black text-gray-900 text-sm">{item.stock}</td>
+                      <td className="px-6 py-4 font-black text-gray-900 text-sm">
+                        <span className={isOutOfStock ? 'text-red-600 font-extrabold' : isCritical ? 'text-orange-600 font-extrabold' : 'text-gray-900'}>
+                          {item.stock}
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         <span
                           className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
@@ -272,6 +288,14 @@ export default function DashboardPage() {
                         >
                           {isOutOfStock ? 'Out of Stock' : isCritical ? 'Critical' : 'Low Stock'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Link
+                          to={`/admin/products?search=${encodeURIComponent(item.name)}`}
+                          className="inline-flex items-center gap-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold px-3 py-1.5 rounded-lg text-xs transition-colors"
+                        >
+                          ✏️ Update Stock
+                        </Link>
                       </td>
                     </tr>
                   );
