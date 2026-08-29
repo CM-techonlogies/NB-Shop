@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useUser, useClerk } from '@clerk/clerk-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useCart } from '../../hooks/useCart';
@@ -9,12 +9,22 @@ import { STORE_NAME } from '../../constants';
 export default function Navbar() {
   const [search, setSearch] = useState('');
   const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, isSignedIn } = useUser();
   const { isAdmin, logout } = useAuth();
   const { itemCount } = useCart();
   const { openSignIn } = useClerk();
   const { language, toggleLanguage, t } = useLanguageStore();
+
+  const handleLogoClick = (e) => {
+    e.preventDefault();
+    if (location.pathname === '/') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/');
+    }
+  };
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -58,7 +68,11 @@ export default function Navbar() {
           </form>
         ) : (
           <>
-            <Link to="/" className="flex items-center gap-2.5 flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleLogoClick}
+              className="flex items-center gap-2.5 flex-shrink-0 text-left cursor-pointer focus:outline-none select-none active:scale-95 transition-transform"
+            >
               <img src="/logo.jpg" alt="NB SHOP" className="h-9 w-9 object-contain rounded-lg shadow-xs" />
               <div className="flex flex-col justify-center leading-tight">
                 <span className="text-lg sm:text-xl font-extrabold tracking-tight font-heading leading-none">
@@ -69,7 +83,7 @@ export default function Navbar() {
                   Your Nearby Grocery Store
                 </span>
               </div>
-            </Link>
+            </button>
             
             <form onSubmit={handleSearch} className="flex-1 max-w-xl hidden md:flex items-center mx-4">
               <div className="relative w-full">

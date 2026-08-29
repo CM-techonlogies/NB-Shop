@@ -22,27 +22,29 @@ export default function BottomNav() {
   // Don't show on admin pages
   if (location.pathname.startsWith('/admin')) return null;
 
-  const handleNavClick = (e, path) => {
-    e.preventDefault();
+  const handleNavClick = (path) => {
     const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
-    // If already on this tab, do nothing — prevents iOS navigate fetch → reload
-    if (isActive) return;
+    if (isActive) {
+      if (path === '/') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+      return;
+    }
     navigate(path);
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] pb-safe transition-colors">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] pb-safe transition-colors select-none">
       <div className="flex items-center justify-around h-16">
         {navItems.map(({ path, icon, label, isCart }) => {
           const isActive = path === '/' ? location.pathname === '/' : location.pathname.startsWith(path);
           return (
-            // Use <a> with onClick so we intercept BEFORE iOS makes a navigate request
-            <a
+            <button
               key={path}
-              href={path}
-              onClick={(e) => handleNavClick(e, path)}
-              className={`flex flex-col items-center gap-0.5 px-3 py-2 relative transition-all duration-200 ${
-                isActive ? 'text-primary-500 scale-110' : 'text-gray-500 dark:text-gray-400'
+              type="button"
+              onClick={() => handleNavClick(path)}
+              className={`flex flex-col items-center justify-center flex-1 h-full gap-0.5 px-2 py-1 relative transition-all duration-150 active:scale-95 focus:outline-none ${
+                isActive ? 'text-primary-500 scale-105' : 'text-gray-500 dark:text-gray-400'
               }`}
             >
               <span className="text-xl relative">
@@ -53,8 +55,8 @@ export default function BottomNav() {
                   </span>
                 )}
               </span>
-              <span className={`text-[10px] font-medium ${isActive ? 'font-bold' : ''}`}>{label}</span>
-            </a>
+              <span className={`text-[10px] ${isActive ? 'font-black' : 'font-medium'}`}>{label}</span>
+            </button>
           );
         })}
       </div>

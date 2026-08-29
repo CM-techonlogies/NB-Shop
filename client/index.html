@@ -214,38 +214,6 @@
 
     <div id="root"></div>
 
-    <!-- EMERGENCY: Unregister any broken/old Service Worker before React loads.
-         This runs synchronously before main.jsx so stale SWs can't intercept. -->
-    <script>
-      (function() {
-        // SW version stamp — increment this to force-kill old SWs on all clients
-        var SW_VERSION = 'v6';
-        var SW_KEY = 'nb_sw_version';
-        var storedVersion = localStorage.getItem(SW_KEY);
-
-        if (storedVersion !== SW_VERSION && 'serviceWorker' in navigator) {
-          // Unregister ALL old service workers
-          navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            var unregisterPromises = registrations.map(function(r) { return r.unregister(); });
-            return Promise.all(unregisterPromises);
-          }).then(function() {
-            // Clear ALL caches
-            if ('caches' in window) {
-              return caches.keys().then(function(keys) {
-                return Promise.all(keys.map(function(k) { return caches.delete(k); }));
-              });
-            }
-          }).then(function() {
-            localStorage.setItem(SW_KEY, SW_VERSION);
-            // Hard reload to pick up fresh SW — only once
-            window.location.reload();
-          }).catch(function() {
-            localStorage.setItem(SW_KEY, SW_VERSION);
-          });
-        }
-      })();
-    </script>
-
     <script type="module" src="/src/main.jsx"></script>
 
     <!-- Fade out & remove splash screen once React mounts (with minimum 3.2s cinematic timing) -->
