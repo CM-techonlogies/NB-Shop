@@ -11,23 +11,21 @@ if (!PUBLISHABLE_KEY) {
   throw new Error('Missing VITE_CLERK_PUBLISHABLE_KEY in .env');
 }
 
-// Clean up any stale Service Worker API/Supabase caches from older builds
-if (typeof window !== 'undefined' && 'caches' in window) {
-  caches.keys().then((names) => {
-    names.forEach((name) => {
-      if (name.includes('api-responses') || name.includes('product-images')) {
-        caches.open(name).then((cache) => {
-          cache.keys().then((requests) => {
-            requests.forEach((req) => {
-              if (req.url.includes('/rest/v1/') || req.url.includes('/api/')) {
-                cache.delete(req);
-              }
-            });
-          });
-        });
-      }
+// ── Unregister ALL Service Workers (SW removed because it caused iOS reload bugs) ──
+// This runs once on every page load to ensure no old SW is intercepting navigations.
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((reg) => {
+      reg.unregister();
+      console.log('[SW] Unregistered:', reg.scope);
     });
-  }).catch(() => {});
+  });
+  // Also clear all caches so no stale precache interferes
+  if ('caches' in window) {
+    caches.keys().then((keys) => {
+      keys.forEach((key) => caches.delete(key));
+    });
+  }
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
