@@ -8,13 +8,13 @@ import { getOrderPaymentOption } from '../../utils/whatsapp';
 import Spinner from '../../components/ui/Spinner';
 
 const TABS = [
-  { label: 'All',              value: '' },
-  { label: 'Pending Payment',  value: 'pending_payment' },
-  { label: 'Confirmed',        value: 'confirmed' },
-  { label: 'Preparing',        value: 'preparing' },
-  { label: 'Out for Delivery', value: 'out_for_delivery' },
-  { label: 'Delivered',        value: 'delivered' },
-  { label: 'Cancelled',        value: 'cancelled' },
+  { label: 'All Orders',        value: '' },
+  { label: 'Confirmed / New',   value: 'confirmed' },
+  { label: 'Preparing',         value: 'preparing' },
+  { label: 'Packed / Ready',    value: 'packed' },
+  { label: 'Out for Delivery',  value: 'out_for_delivery' },
+  { label: 'Delivered',         value: 'delivered' },
+  { label: 'Cancelled',         value: 'cancelled' },
 ];
 
 const STATUS_COLORS = {
@@ -191,9 +191,28 @@ export default function OrdersAdminPage() {
                       </td>
                       <td className="px-6 py-4 font-bold text-gray-900">₹{total.toFixed(0)}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
-                          {order.status?.replace(/_/g, ' ')}
-                        </span>
+                        {(() => {
+                          const isPick = opt.type === 'pickup';
+                          let badgeText = 'Confirmed';
+                          if (order.status === 'pending_payment' || order.status === 'confirmed' || order.status === 'payment_received') {
+                            badgeText = 'Confirmed';
+                          } else if (order.status === 'preparing') {
+                            badgeText = 'Preparing';
+                          } else if (order.status === 'packed') {
+                            badgeText = isPick ? 'Ready for Pickup' : 'Packed';
+                          } else if (order.status === 'out_for_delivery') {
+                            badgeText = 'Out for Delivery';
+                          } else if (order.status === 'delivered') {
+                            badgeText = isPick ? 'Picked Up' : 'Delivered';
+                          } else if (order.status === 'cancelled') {
+                            badgeText = 'Cancelled';
+                          }
+                          return (
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-bold uppercase ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-600'}`}>
+                              {badgeText}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Link to={`/admin/orders/${orderId}`} className="text-indigo-600 font-semibold hover:underline">

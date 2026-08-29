@@ -169,9 +169,29 @@ export default function OrderDetailPage() {
               <span>Reorder Items</span>
             </button>
           )}
-          <span className={`px-4 py-2 rounded-full text-sm font-bold border uppercase tracking-wider ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
-            {order.status?.replace(/_/g, ' ')}
-          </span>
+          {(() => {
+            const paymentOpt = getOrderPaymentOption(order);
+            const isPickup = paymentOpt.type === 'pickup';
+            let label = 'Order Confirmed';
+            if (order.status === 'pending_payment' || order.status === 'confirmed' || order.status === 'payment_received') {
+              label = 'Order Confirmed';
+            } else if (order.status === 'preparing') {
+              label = 'Preparing Order';
+            } else if (order.status === 'packed') {
+              label = isPickup ? 'Ready for Pickup 🏪' : 'Packed & Ready 📦';
+            } else if (order.status === 'out_for_delivery') {
+              label = 'Out for Delivery 🛵';
+            } else if (order.status === 'delivered') {
+              label = isPickup ? 'Picked Up ✅' : 'Delivered ✅';
+            } else if (order.status === 'cancelled') {
+              label = 'Cancelled ❌';
+            }
+            return (
+              <span className={`px-4 py-2 rounded-full text-sm font-bold border uppercase tracking-wider ${STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+                {label}
+              </span>
+            );
+          })()}
         </div>
       </div>
 
@@ -183,7 +203,7 @@ export default function OrderDetailPage() {
           {/* Timeline */}
           <div className="bg-white p-6 rounded-2xl shadow-card">
             <h3 className="font-bold font-heading text-lg mb-6">Order Status</h3>
-            <OrderTimeline status={order.status} history={order.order_status_history} />
+            <OrderTimeline order={order} status={order.status} history={order.order_status_history} />
           </div>
 
           {/* Items Table */}
@@ -231,37 +251,15 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
-          {/* Upload Payment Screenshot Section (if pending payment) */}
-          {(order.status === 'pending_payment' || order.status === 'payment_received') && (
-            <div className="bg-orange-50 border border-orange-200 p-6 rounded-2xl">
-              <h3 className="font-bold text-orange-900 text-lg mb-2">Payment Verification</h3>
-              <p className="text-sm text-orange-700 mb-4">
-                Please upload your payment screenshot after completing the UPI transaction so the store owner can verify and confirm your order quickly.
-              </p>
-              
-              {order.paymentScreenshot || order.payment_screenshot_url ? (
-                <div className="bg-white p-4 rounded-xl border border-orange-200 inline-block">
-                  <span className="text-xs font-bold text-green-600 flex items-center gap-1 mb-2">
-                    ✓ Screenshot Uploaded
-                  </span>
-                  <img
-                    src={order.paymentScreenshot?.url || order.payment_screenshot_url}
-                    alt="Payment Screenshot"
-                    className="max-w-xs rounded-lg border border-gray-200"
-                  />
-                </div>
-              ) : (
-                <label className="inline-flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-bold px-6 py-3 rounded-xl cursor-pointer shadow transition-colors text-sm">
-                  {uploadScreenshot.isPending ? 'Uploading...' : '📤 Upload Payment Screenshot'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleUploadScreenshot}
-                    disabled={uploadScreenshot.isPending}
-                    className="hidden"
-                  />
-                </label>
-              )}
+          {/* Payment Proof (Only if an image exists) */}
+          {(order.paymentScreenshot?.url || order.payment_screenshot_url) && (
+            <div className="bg-white border border-gray-100 p-6 rounded-2xl shadow-card">
+              <h3 className="font-bold text-gray-900 text-base mb-3">Payment Receipt / Proof</h3>
+              <img
+                src={order.paymentScreenshot?.url || order.payment_screenshot_url}
+                alt="Payment Screenshot"
+                className="max-w-xs rounded-xl border border-gray-200 shadow-xs"
+              />
             </div>
           )}
         </div>

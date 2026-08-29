@@ -1,9 +1,8 @@
 import React from 'react';
 import { formatDateTime } from '../../utils/formatDate';
+import { getOrderPaymentOption } from '../../utils/whatsapp';
 
-const STATUS_ORDER = [
-  'pending_payment',
-  'payment_received',
+const DELIVERY_STATUS_ORDER = [
   'confirmed',
   'preparing',
   'packed',
@@ -11,37 +10,78 @@ const STATUS_ORDER = [
   'delivered',
 ];
 
-const STATUS_LABELS = {
-  pending_payment:  { label: 'Pending Payment',  description: 'Awaiting payment confirmation.' },
-  payment_received: { label: 'Payment Received',  description: 'Payment confirmed, processing order.' },
-  confirmed:        { label: 'Order Confirmed',   description: 'Your order has been confirmed.' },
-  preparing:        { label: 'Preparing',          description: 'We are packing your items.' },
-  packed:           { label: 'Packed',             description: 'Order packed and ready for pickup.' },
-  out_for_delivery: { label: 'Out for Delivery',   description: 'Your order is on the way!' },
-  delivered:        { label: 'Delivered',           description: 'Order delivered. Enjoy!' },
+const DELIVERY_STATUS_LABELS = {
+  pending_payment:  { label: 'Order Confirmed',      description: 'Your order has been received & confirmed.' },
+  confirmed:        { label: 'Order Confirmed',      description: 'Your order has been confirmed.' },
+  preparing:        { label: 'Preparing Order',      description: 'We are packing your items.' },
+  packed:           { label: 'Packed & Ready',       description: 'Order packed and ready for dispatch.' },
+  out_for_delivery: { label: 'Out for Delivery 🛵',   description: 'Delivery agent is on the way to your address!' },
+  delivered:        { label: 'Delivered ✅',          description: 'Order delivered successfully. Enjoy!' },
+  cancelled:        { label: 'Cancelled ❌',         description: 'This order was cancelled.' },
+};
+
+const PICKUP_STATUS_ORDER = [
+  'confirmed',
+  'preparing',
+  'packed',
+  'delivered',
+];
+
+const PICKUP_STATUS_LABELS = {
+  pending_payment:  { label: 'Order Confirmed',      description: 'Your order has been received & confirmed.' },
+  confirmed:        { label: 'Order Confirmed',      description: 'Your order has been confirmed by the store.' },
+  preparing:        { label: 'Preparing Order',      description: 'Store is packing your items.' },
+  packed:           { label: 'Ready for Pickup 🏪',  description: 'Your order is packed! Please visit our store to pick up & pay.' },
+  delivered:        { label: 'Picked Up & Paid ✅',   description: 'Order picked up successfully. Thank you!' },
+  cancelled:        { label: 'Cancelled ❌',         description: 'This order was cancelled.' },
 };
 
 // Accepts either { order } (full order object) or { status, history } (separate props)
 export default function OrderTimeline({ order, status, history }) {
-  const currentStatus = order?.status ?? status ?? '';
-  // Supabase: order_status_history; fallback to statusHistory (legacy)
+  const currentStatus = order?.status ?? status ?? 'confirmed';
   const statusHistory = order?.order_status_history ?? order?.statusHistory ?? history ?? [];
-  const currentStatusIndex = STATUS_ORDER.indexOf(currentStatus);
+
+  const paymentOpt = getOrderPaymentOption(order);
+  const isPickup   = paymentOpt.type === 'pickup';
+
+  const statusOrder  = isPickup ? PICKUP_STATUS_ORDER : DELIVERY_STATUS_ORDER;
+  const statusLabels = isPickup ? PICKUP_STATUS_LABELS : DELIVERY_STATUS_LABELS;
+
+  // Map legacy pending_payment to confirmed index
+  let normalizedStatus = currentStatus === 'pending_payment' || currentStatus === 'payment_received'
+    ? 'confirmed'
+    : currentStatus;
+
+  const currentStatusIndex = statusOrder.indexOf(normalizedStatus);
+
+  if (currentStatus === 'cancelled') {
+    return (
+      <div className="py-4">
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-4 text-center">
+          <span className="text-3xl block mb-2">❌</span>
+          <h4 className="font-bold text-red-700 text-sm">Order Cancelled</h4>
+          <p className="text-xs text-red-500 mt-1">This order has been cancelled.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-4">
       <div className="relative pl-6">
         <div className="absolute left-3 top-2 bottom-2 w-0.5 bg-gray-200"></div>
 
-        {STATUS_ORDER.map((statusKey, index) => {
-          const config = STATUS_LABELS[statusKey];
+        {statusOrder.map((statusKey, index) => {
+          const config = statusLabels[statusKey];
           if (!config) return null;
 
           const isCompleted = index <= currentStatusIndex && currentStatusIndex >= 0;
           const isCurrent   = index === currentStatusIndex;
           const isFuture    = index > currentStatusIndex || currentStatusIndex < 0;
 
-          const historyEntry = statusHistory.find(h => h.status === statusKey);
+          const historyEntry = statusHistory.find(
+            h => h.status === statusKey || (statusKey === 'confirmed' && h.status === 'pending_payment')
+          );
 
           return (
             <div key={statusKey} className="relative mb-6 last:mb-0">

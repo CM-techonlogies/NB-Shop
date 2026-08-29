@@ -3,18 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useCart } from '../../hooks/useCart';
 import { formatPrice } from '../../utils/formatPrice';
+import { getOrderPaymentOption } from '../../utils/whatsapp';
 import Badge from '../ui/Badge';
-
-const STATUS_CONFIG = {
-  pending_payment:  { label: 'Pending Payment', color: 'warning' },
-  payment_received: { label: 'Payment Received', color: 'info' },
-  confirmed:        { label: 'Confirmed',        color: 'info' },
-  preparing:        { label: 'Preparing Order',  color: 'warning' },
-  packed:           { label: 'Packed & Ready',   color: 'info' },
-  out_for_delivery: { label: 'Out for Delivery', color: 'info' },
-  delivered:        { label: 'Delivered',        color: 'success' },
-  cancelled:        { label: 'Cancelled',        color: 'danger' },
-};
 
 const formatDate = (d) => {
   if (!d) return '';
@@ -38,7 +28,32 @@ export default function OrderCard({ order, isHistoryTab }) {
   const createdAt   = order.created_at || order.createdAt;
   const total       = parseFloat(order.total ?? order.totalAmount ?? 0);
   const items       = order.order_items || order.items || [];
-  const statusConf  = STATUS_CONFIG[order.status] || { label: order.status, color: 'gray' };
+
+  const paymentOpt  = getOrderPaymentOption(order);
+  const isPickup    = paymentOpt.type === 'pickup';
+
+  let statusLabel = 'Order Confirmed';
+  let badgeVariant = 'info';
+
+  if (order.status === 'pending_payment' || order.status === 'confirmed' || order.status === 'payment_received') {
+    statusLabel = 'Order Confirmed';
+    badgeVariant = 'info';
+  } else if (order.status === 'preparing') {
+    statusLabel = 'Preparing Order';
+    badgeVariant = 'warning';
+  } else if (order.status === 'packed') {
+    statusLabel = isPickup ? 'Ready for Pickup 🏪' : 'Packed & Ready 📦';
+    badgeVariant = isPickup ? 'warning' : 'info';
+  } else if (order.status === 'out_for_delivery') {
+    statusLabel = 'Out for Delivery 🛵';
+    badgeVariant = 'info';
+  } else if (order.status === 'delivered') {
+    statusLabel = isPickup ? 'Picked Up ✅' : 'Delivered ✅';
+    badgeVariant = 'success';
+  } else if (order.status === 'cancelled') {
+    statusLabel = 'Cancelled ❌';
+    badgeVariant = 'danger';
+  }
 
   // Reorder is ONLY visible for completed/past orders (delivered/cancelled)
   const isPastOrder = ['delivered', 'cancelled'].includes(order.status) || isHistoryTab;
@@ -86,14 +101,19 @@ export default function OrderCard({ order, isHistoryTab }) {
       {/* Top Bar: Invoice ID & Status Badge */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100">
         <div>
-          <div className="text-base font-bold text-primary-600 font-heading tracking-wide">
-            #{invoiceId}
+          <div className="flex items-center gap-2">
+            <span className="text-base font-bold text-primary-600 font-heading tracking-wide">
+              #{invoiceId}
+            </span>
+            <span className={`inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-lg border ${paymentOpt.color}`}>
+              {paymentOpt.shortBadge}
+            </span>
           </div>
           <div className="text-xs text-gray-400 font-medium mt-0.5">
             Placed on {formatDate(createdAt)}
           </div>
         </div>
-        <Badge variant={statusConf.color}>{statusConf.label}</Badge>
+        <Badge variant={badgeVariant}>{statusLabel}</Badge>
       </div>
 
       {/* Items Preview List */}

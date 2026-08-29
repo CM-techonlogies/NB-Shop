@@ -85,7 +85,11 @@ export const supaOrders = {
    */
   getAll: (status) => {
     let query = '/orders?select=*,users(id,name,email,phone)&order=created_at.desc';
-    if (status) query += `&status=eq.${status}`;
+    if (status === 'confirmed') {
+      query += `&status=in.(confirmed,pending_payment,payment_received)`;
+    } else if (status) {
+      query += `&status=eq.${status}`;
+    }
     return supaFetch(query);
   },
 

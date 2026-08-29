@@ -162,7 +162,13 @@ export default function OrderDetailAdminPage() {
               STATUS_COLORS[order.status] || 'bg-gray-100 text-gray-700 border-gray-200'
             }`}
           >
-            {order.status?.replace(/_/g, ' ')}
+            {order.status === 'pending_payment' || order.status === 'confirmed'
+              ? 'Order Confirmed'
+              : order.status === 'packed'
+              ? (paymentOption.type === 'pickup' ? 'Ready for Pickup 🏪' : 'Packed 📦')
+              : order.status === 'delivered'
+              ? (paymentOption.type === 'pickup' ? 'Picked Up ✅' : 'Delivered ✅')
+              : order.status?.replace(/_/g, ' ')}
           </span>
         </div>
       </div>
@@ -177,23 +183,33 @@ export default function OrderDetailAdminPage() {
             <h3 className="font-bold text-lg text-gray-900 mb-4">Update Order Status</h3>
             <form onSubmit={handleUpdateStatus} className="space-y-4">
               <div className="flex flex-col sm:flex-row gap-4 items-end">
-                <div className="flex-1">
-                  <label className="block text-xs font-bold text-gray-700 mb-1">Status</label>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    Status {paymentOption.type === 'pickup' ? '(Store Pickup Flow)' : '(Home Delivery Flow)'}
+                  </label>
                   <select
-                    value={selectedStatus}
+                    value={selectedStatus === 'pending_payment' ? 'confirmed' : selectedStatus}
                     onChange={(e) => setSelectedStatus(e.target.value)}
                     className="w-full p-2.5 border border-gray-200 rounded-xl text-sm bg-white outline-none focus:ring-2 focus:ring-indigo-300 font-medium"
                   >
-                    <option value="pending_payment">Pending Payment</option>
-                    <option value="payment_received">Payment Received</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="preparing">Preparing</option>
-                    <option value="packed">Packed</option>
-                    <option value="out_for_delivery">Out for Delivery</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
+                    {paymentOption.type === 'pickup' ? (
+                      <>
+                        <option value="confirmed">📋 Order Confirmed (New Order)</option>
+                        <option value="preparing">⏳ Preparing Order</option>
+                        <option value="packed">🏪 Ready for Pickup at Store</option>
+                        <option value="delivered">✅ Picked Up &amp; Completed</option>
+                        <option value="cancelled">❌ Cancelled</option>
+                      </>
+                    ) : (
+                      <>
+                        <option value="confirmed">📋 Order Confirmed (New Order)</option>
+                        <option value="preparing">⏳ Preparing Order</option>
+                        <option value="packed">📦 Packed &amp; Ready for Dispatch</option>
+                        <option value="out_for_delivery">🛵 Out for Delivery</option>
+                        <option value="delivered">✅ Delivered &amp; Completed</option>
+                        <option value="cancelled">❌ Cancelled</option>
+                      </>
+                    )}
                   </select>
-                </div>
                 <button
                   type="submit"
                   disabled={updateStatusMutation.isPending}
