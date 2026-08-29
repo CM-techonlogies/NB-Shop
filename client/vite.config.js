@@ -19,7 +19,7 @@ export default defineConfig({
         // navigateFallback handles all SPA routes offline — Workbox serves this from
         // precache for navigate requests WITHOUT a separate runtime NetworkFirst rule
         navigateFallback: '/index.html',
-        navigateFallbackDenylist: [/^\/api/, /^\/rest/, /\.(?:png|jpg|jpeg|webp|svg|gif|ico|css|js)$/i],
+        navigateFallbackDenylist: [/^\/admin/, /^\/api/, /^\/rest/, /\.(?:png|jpg|jpeg|webp|svg|gif|ico|css|js)$/i],
         // Don't precache large chunks — they'll be cached on first use
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
         runtimeCaching: [
@@ -28,6 +28,12 @@ export default defineConfig({
           // handler for navigate mode returns fresh HTML → full page reload.
           // Workbox's built-in precache navigation routing (via navigateFallback)
           // handles offline fallback correctly without causing reloads.
+
+          // Admin routes — ALWAYS NetworkOnly (Zero Cache so admin changes are always live)
+          {
+            urlPattern: ({ url }) => url.pathname.startsWith('/admin'),
+            handler: 'NetworkOnly',
+          },
 
           // JS/CSS assets — CacheFirst (hashed filenames = safe forever)
           {
