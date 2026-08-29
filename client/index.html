@@ -216,11 +216,11 @@
 
     <script type="module" src="/src/main.jsx"></script>
 
-    <!-- Fade out & remove splash screen once React mounts (with minimum 3.2s cinematic timing) -->
+    <!-- Fade out & remove splash screen once React mounts (with minimum 1.5s timing) -->
     <script>
       (function() {
         var startTime = Date.now();
-        var MIN_SPLASH_TIME = 3200; // 3.2 seconds minimum display
+        var MIN_SPLASH_TIME = 1500; // 1.5 seconds minimum
 
         function dismissSplash() {
           var splash = document.getElementById('nb-splash');
@@ -245,10 +245,10 @@
         });
         observer.observe(document.getElementById('root'), { childList: true, subtree: true });
 
-        // Safety fallback — remove splash after 7s max
+        // Safety fallback — remove splash after 4s max
         setTimeout(function(){
           dismissSplash();
-        }, 7000);
+        }, 4000);
       })();
     </script>
   </body>

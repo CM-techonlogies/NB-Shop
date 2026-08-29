@@ -2,10 +2,9 @@ import React from 'react';
 
 // ─── Chunk-load failure detector ──────────────────────────────────────────────
 // When Vite pushes a new build, old chunk filenames (hashes) no longer exist.
-// If the Service Worker serves stale HTML and React tries to lazy-import a
-// chunk that was renamed, we get "Importing a module script failed".
-// We detect this once per session and do a hard reload to pick up fresh HTML + chunks.
-const CHUNK_FAIL_KEY = 'chunk_reload_attempted';
+// We detect this so we can show the user a friendly "Please refresh" message.
+// NOTE: We do NOT auto-reload here — that was causing an infinite reload loop on iOS.
+const CHUNK_FAIL_KEY = 'chunk_reload_v2';
 
 function isChunkLoadError(error) {
   const msg = (error?.message || '').toLowerCase();
@@ -90,15 +89,9 @@ export default class ErrorBoundary extends React.Component {
       console.error('[ErrorBoundary]', error, info);
     }
 
-    // Auto-reload once if it's a chunk load error (stale SW cache)
-    if (isChunkLoadError(error)) {
-      const alreadyAttempted = sessionStorage.getItem(CHUNK_FAIL_KEY);
-      if (!alreadyAttempted) {
-        sessionStorage.setItem(CHUNK_FAIL_KEY, '1');
-        // Give the browser a tick, then hard-reload to bypass SW cache
-        setTimeout(() => window.location.reload(true), 400);
-      }
-    }
+    // For chunk load errors: show user a "Refresh App" button.
+    // We do NOT auto-reload anymore — that caused an infinite crash loop on iOS PWA
+    // (sessionStorage resets on every reload, so the "already attempted" flag was lost).
   }
 
   handleRetry() {
