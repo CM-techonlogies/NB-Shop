@@ -82,9 +82,9 @@ export const useCategories = () => {
   return useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.getCategories().then(r => extractArray(r)),
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: 60 * 1000, // 1 min in-memory cache to prevent skeleton flash on tab switch
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -103,9 +103,9 @@ export const useCategoryBySlug = (slug) => {
     queryKey: ['categories', slug],
     queryFn: () => categoryService.getCategoryBySlug(slug).then(r => r?.data?.data || r?.data || null),
     enabled: !!slug,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -118,9 +118,9 @@ export const useProductsByCategory = (categoryId, limit = 5) => {
         .getProducts({ category: categoryId, limit, available: true })
         .then(r => extractPaginated(r).data || []),
     enabled: !!categoryId,
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };
 
@@ -128,8 +128,8 @@ export const useBanners = () => {
   return useQuery({
     queryKey: ['public-banners'],
     queryFn: () => api.get('/banners').then(r => r.data?.data || r.data || []).catch(() => []),
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
   });
 };

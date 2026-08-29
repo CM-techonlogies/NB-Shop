@@ -70,7 +70,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="animate-fadeIn">
+    <div>
       <Helmet>
         <title>NB Shop - Your Nearby Grocery Store</title>
         <meta name="description" content='M/s NAVARAM BHUBAJI - "सभी प्रकार की किराना & प्रोविजनल आइटम्स उपलब्ध..."' />

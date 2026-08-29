@@ -22,17 +22,19 @@ function lazyWithRetry(importFn) {
   );
 }
 
-// Customer pages (lazy + retry)
-const HomePage         = lazyWithRetry(() => import('../pages/customer/HomePage'));
+// Main Customer pages — eagerly imported for instant 0ms native app-like tab switching (no Suspense flash)
+import HomePage from '../pages/customer/HomePage';
+import CategoriesPage from '../pages/customer/CategoriesPage';
+import CartPage from '../pages/customer/CartPage';
+import OrdersPage from '../pages/customer/OrdersPage';
+import ProfilePage from '../pages/customer/ProfilePage';
+
+// Other customer pages (lazy + retry)
 const ProductsPage     = lazyWithRetry(() => import('../pages/customer/ProductsPage'));
 const ProductDetailPage= lazyWithRetry(() => import('../pages/customer/ProductDetailPage'));
-const CategoriesPage   = lazyWithRetry(() => import('../pages/customer/CategoriesPage'));
 const CategoryPage     = lazyWithRetry(() => import('../pages/customer/CategoryPage'));
-const CartPage         = lazyWithRetry(() => import('../pages/customer/CartPage'));
 const CheckoutPage     = lazyWithRetry(() => import('../pages/customer/CheckoutPage'));
-const OrdersPage       = lazyWithRetry(() => import('../pages/customer/OrdersPage'));
 const OrderDetailPage  = lazyWithRetry(() => import('../pages/customer/OrderDetailPage'));
-const ProfilePage      = lazyWithRetry(() => import('../pages/customer/ProfilePage'));
 const LoginPage        = lazyWithRetry(() => import('../pages/customer/LoginPage'));
 const AboutPage        = lazyWithRetry(() => import('../pages/customer/AboutPage'));
 const ContactPage      = lazyWithRetry(() => import('../pages/customer/ContactPage'));
