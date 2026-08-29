@@ -6,14 +6,6 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=2" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <meta name="theme-color" content="#FF6B00" />
-
-    <!-- iOS Safari PWA — prevents "A problem repeatedly occurred" crash -->
-    <!-- These tags make iOS treat the site as a full-screen native app -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!-- Use 'default' (not black-translucent) so status bar doesn't overlap content -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="NB Shop" />
-    <meta name="mobile-web-app-capable" content="yes" />
     <!-- Prevent iOS from phone-number detection (can cause layout crashes) -->
     <meta name="format-detection" content="telephone=no" />
 
@@ -40,21 +32,8 @@
     <link rel="preconnect" href="https://clerk.com" crossorigin />
     <link rel="preconnect" href="https://img.clerk.com" crossorigin />
 
-    <!-- Google Fonts — non-blocking (media trick) -->
-    <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap"
-    />
-    <link
-      rel="stylesheet"
-      media="print"
-      onload="this.media='all'"
-      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap"
-    />
-    <noscript>
-      <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" />
-    </noscript>
+    <!-- Google Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&family=Poppins:wght@400;500;600;700;800&display=swap" />
 
     <!-- Inline critical CSS + Netflix-style Splash Screen -->
     <style>
@@ -214,8 +193,23 @@
 
     <div id="root"></div>
 
-    <script type="module" src="/src/main.jsx"></script>
+    <!-- Silently unregister any old Service Worker — NO reload, runs before React -->
+    <script>
+      try {
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(function(regs) {
+            regs.forEach(function(r) { r.unregister(); });
+          });
+          if ('caches' in window) {
+            caches.keys().then(function(keys) {
+              keys.forEach(function(k) { caches.delete(k); });
+            });
+          }
+        }
+      } catch(e) {}
+    </script>
 
+    <script type="module" src="/src/main.jsx"></script>
     <!-- Fade out & remove splash screen once React mounts (with minimum 1.5s timing) -->
     <script>
       (function() {
