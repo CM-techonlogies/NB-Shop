@@ -27,6 +27,9 @@ const headers = {
 async function supaFetch(path, options = {}) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1${path}`, {
     headers: { ...headers, ...options.headers },
+    // 'no-store' prevents browser (Safari) from caching Supabase REST responses.
+    // Without this, even invalidateQueries/refetch returns stale browser-cached data.
+    cache: 'no-store',
     ...options,
   });
   if (!res.ok) {
