@@ -75,7 +75,8 @@ exports.createOrder = asyncHandler(async (req, res) => {
   const freeDeliveryAbove = parseSetting(settings?.free_delivery_above, 499);
   const chargePerOrder    = parseSetting(settings?.delivery_charge, 40);
 
-  const deliveryCharge = subtotal >= freeDeliveryAbove ? 0 : chargePerOrder;
+  const isStorePickup = req.body.paymentMethod === 'pickup' || (notes && notes.toLowerCase().includes('pickup'));
+  const deliveryCharge = isStorePickup ? 0 : (subtotal >= freeDeliveryAbove ? 0 : chargePerOrder);
   const total = subtotal + deliveryCharge;
 
   // Generate invoice ID

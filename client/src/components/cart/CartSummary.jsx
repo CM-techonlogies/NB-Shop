@@ -4,12 +4,15 @@ import { useCart } from '../../hooks/useCart';
 import { useLanguageStore } from '../../store/languageStore';
 import { formatPrice } from '../../utils/formatPrice';
 
-export default function CartSummary({ showCheckoutButton = true }) {
+export default function CartSummary({ showCheckoutButton = true, isPickup = false }) {
   const navigate = useNavigate();
-  const { subtotal: cartTotal, itemCount, deliveryCharge, freeDeliveryAbove, total } = useCart();
+  const { subtotal: cartTotal, itemCount, deliveryCharge: defaultDeliveryCharge, freeDeliveryAbove } = useCart();
   const { t, language } = useLanguageStore();
+
+  const effectiveDeliveryCharge = isPickup ? 0 : defaultDeliveryCharge;
+  const effectiveTotal = cartTotal + effectiveDeliveryCharge;
   
-  const needsMoreForFree = cartTotal > 0 && cartTotal < freeDeliveryAbove;
+  const needsMoreForFree = !isPickup && cartTotal > 0 && cartTotal < freeDeliveryAbove;
   const progressPercent = Math.min(100, (cartTotal / freeDeliveryAbove) * 100);
 
   if (itemCount === 0) return null;
@@ -34,15 +37,26 @@ export default function CartSummary({ showCheckoutButton = true }) {
         </div>
       )}
 
+      {isPickup && (
+        <div className="mb-4 bg-emerald-50 p-3 rounded-2xl border border-emerald-200 flex items-center gap-2 text-xs text-emerald-800 font-semibold">
+          <span>🏪</span>
+          <span>{language === 'hi' ? 'स्टोर पिकअप: कोई डिलीवरी शुल्क नहीं (मुफ्त)' : 'Store Pickup: No Delivery Fee (FREE)'}</span>
+        </div>
+      )}
+
       <div className="space-y-3 text-sm text-gray-600 mb-4 pb-4 border-b border-gray-100">
         <div className="flex justify-between">
           <span>{t('item_total')} ({itemCount})</span>
           <span className="font-medium text-gray-800">{formatPrice(cartTotal)}</span>
         </div>
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span>{t('delivery_charge')}</span>
-          {deliveryCharge > 0 ? (
-            <span className="font-medium text-gray-800">{formatPrice(deliveryCharge)}</span>
+          {isPickup ? (
+            <span className="font-bold text-emerald-600 bg-emerald-100/80 px-2 py-0.5 rounded-md text-xs">
+              {t('free')}
+            </span>
+          ) : effectiveDeliveryCharge > 0 ? (
+            <span className="font-medium text-gray-800">{formatPrice(effectiveDeliveryCharge)}</span>
           ) : (
             <span className="font-bold text-emerald-600">{t('free')}</span>
           )}
@@ -51,7 +65,7 @@ export default function CartSummary({ showCheckoutButton = true }) {
 
       <div className="flex justify-between items-end mb-5">
         <span className="text-base font-bold text-gray-800 font-heading">{t('to_pay')}</span>
-        <span className="text-2xl font-black text-primary-600 font-heading">{formatPrice(total)}</span>
+        <span className="text-2xl font-black text-primary-600 font-heading">{formatPrice(effectiveTotal)}</span>
       </div>
 
       {showCheckoutButton && (

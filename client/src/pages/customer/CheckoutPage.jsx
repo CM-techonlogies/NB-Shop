@@ -139,6 +139,7 @@ export default function CheckoutPage() {
           };
         }),
         notes: formattedNotes,
+        paymentMethod: paymentMethod,
       };
 
       const result = await createOrder.mutateAsync(orderData);
@@ -441,7 +442,7 @@ export default function CheckoutPage() {
         {/* Order Summary */}
         <div className="lg:w-1/3">
           <div className="sticky top-24">
-            <CartSummary showCheckoutButton={false} />
+            <CartSummary showCheckoutButton={false} isPickup={paymentMethod === 'pickup'} />
             
             <button 
               type="submit"
